@@ -32,12 +32,16 @@ jobs:
     - name: Build db
       run: |
         mkdir vdb_data
+        curl -L https://github.com/aquasecurity/vuln-list/archive/refs/heads/main.zip -o /tmp/main.zip
         cd vulnerability-db && python vdb/cli.py --cache-os
         ls -lh vdb_data
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: .
         VDB_HOME: vdb_data
+        GITHUB_PAGE_COUNT: 5
+        NVD_START_YEAR: 2016
+        SCAN_DEBUG_MODE: debug
     - name: Upload db
       run: |
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
