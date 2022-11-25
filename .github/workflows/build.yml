@@ -1,12 +1,16 @@
-name: Python matrix CI
+name: Build and Upload vdb
 
-on: [push]
+on:
+  push:
+  schedule:
+  - cron: "0 */12 * * *"
+  workflow_dispatch:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
+  builder:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
