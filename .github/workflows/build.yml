@@ -48,7 +48,6 @@ jobs:
         oras push ghcr.io/$IMAGE_NAME:v1 \
           ./data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
           ./data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
-        oras logout
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
