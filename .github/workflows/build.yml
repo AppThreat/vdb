@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/checkout@v3
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
@@ -57,5 +58,4 @@ jobs:
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 5
         NVD_START_YEAR: 2018
-        SCAN_DEBUG_MODE: debug
         GITHUB_USERNAME: ${{ github.actor }}
