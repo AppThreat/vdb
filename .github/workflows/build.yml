@@ -34,7 +34,7 @@ jobs:
         mv oras-install/oras /usr/local/bin/
         rm -rf oras_0.16.0_*.tar.gz oras-install/
         oras version
-    - name: Build db
+    - name: Build and upload db
       run: |
         mkdir vdb_data vdb_cache
         zip -q -r vuln-list.zip ./vuln-list/
@@ -43,6 +43,10 @@ jobs:
         cd vulnerability-db && python vdb/cli.py --cache-os
         ls -lh vdb_data
         ls -lh vdb_cache
+        echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
+        oras push ghcr.io/$IMAGE_NAME:v1 \
+          ./vdb_data/data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
+          ./vdb_data/data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: .
@@ -51,12 +55,4 @@ jobs:
         GITHUB_PAGE_COUNT: 5
         NVD_START_YEAR: 2018
         SCAN_DEBUG_MODE: debug
-    - name: Upload db
-      run: |
-        echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/$IMAGE_NAME:v1 \
-          ./vdb_data/data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
-          ./vdb_data/data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
