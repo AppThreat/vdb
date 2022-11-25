@@ -49,7 +49,7 @@ jobs:
           ./vdb_data/data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PYTHONPATH: .
+        PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 5
