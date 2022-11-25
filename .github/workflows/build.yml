@@ -40,7 +40,7 @@ jobs:
         zip -q -r vuln-list.zip ./vuln-list/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list/
-        cd vulnerability-db && python vdb/cli.py --cache-os
+        python vulnerability-db/vdb/cli.py --cache-os
         ls -lh vdb_data
         ls -lh vdb_cache
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
