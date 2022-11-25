@@ -43,10 +43,12 @@ jobs:
         python vulnerability-db/vdb/cli.py --cache-os
         ls -lh vdb_data
         ls -lh vdb_cache
+        cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/$IMAGE_NAME:v1 \
-          ./vdb_data/data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
-          ./vdb_data/data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
+          ./data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
+          ./data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
+        oras logout
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
