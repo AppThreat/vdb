@@ -54,7 +54,9 @@ jobs:
     - name: Upload db
       run: |
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/$IMAGE_NAME:v1 ./vdb_data/:application/vnd.ngcloudsec.vdb.layer.v1+tar
+        oras push ghcr.io/$IMAGE_NAME:v1 \
+          ./vdb_data/data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
+          ./vdb_data/data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
