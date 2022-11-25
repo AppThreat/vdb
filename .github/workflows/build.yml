@@ -13,6 +13,11 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
+    - uses: actions/checkout@v3
+      with:
+        repository: ngcloudsec/vuln-list
+        path: vuln-list
+        fetch-depth: '1'
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -31,16 +36,20 @@ jobs:
         oras version
     - name: Build db
       run: |
-        mkdir vdb_data
-        curl -L https://github.com/aquasecurity/vuln-list/archive/refs/heads/main.zip -o /tmp/main.zip
+        mkdir vdb_data vdb_cache
+        zip -q -r vuln-list.zip ./vuln-list/
+        mv vuln-list.zip vdb_cache/
+        rm -rf ./vuln-list/
         cd vulnerability-db && python vdb/cli.py --cache-os
         ls -lh vdb_data
+        ls -lh vdb_cache
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: .
         VDB_HOME: vdb_data
+        VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 5
-        NVD_START_YEAR: 2016
+        NVD_START_YEAR: 2018
         SCAN_DEBUG_MODE: debug
     - name: Upload db
       run: |
