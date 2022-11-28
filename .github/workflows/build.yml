@@ -18,11 +18,6 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-    - uses: actions/checkout@v3
-      with:
-        repository: ngcloudsec/vuln-list
-        path: vuln-list
-        fetch-depth: '1'
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -41,13 +36,9 @@ jobs:
         oras version
     - name: Build and upload db
       run: |
-        mkdir vdb_data vdb_cache
-        zip -q -r vuln-list.zip ./vuln-list/
-        mv vuln-list.zip vdb_cache/
-        rm -rf ./vuln-list/
+        mkdir vdb_data
         python vulnerability-db/vdb/cli.py --cache-os
         ls -lh vdb_data
-        ls -lh vdb_cache
         cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/$IMAGE_NAME:v1 \
@@ -59,7 +50,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
-        VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 5
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
