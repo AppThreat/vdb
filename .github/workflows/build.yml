@@ -36,11 +36,11 @@ jobs:
         $GITHUB_WORKSPACE/oras version
     - name: Build and upload db
       run: |
+        echo $GITHUB_TOKEN | oras login --registry-config $GITHUB_WORKSPACE/.ora_docker/auth.json ghcr.io -u $GITHUB_USERNAME --password-stdin
         mkdir vdb_data
         python vulnerability-db/vdb/cli.py --cache-os
         ls -lh vdb_data
         cd vdb_data
-        echo $GITHUB_TOKEN | oras login --registry-config $GITHUB_WORKSPACE/.ora_docker/auth.json ghcr.io -u $GITHUB_USERNAME --password-stdin
         $GITHUB_WORKSPACE/oras push ghcr.io/$IMAGE_NAME:v1 \
           --registry-config $GITHUB_WORKSPACE/.ora_docker/auth.json \
           --config ../config.json:application/vnd.oras.config.v1+json \
