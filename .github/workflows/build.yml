@@ -31,9 +31,9 @@ jobs:
         curl -LO https://github.com/oras-project/oras/releases/download/v0.16.0/oras_0.16.0_linux_amd64.tar.gz
         mkdir -p oras-install/
         tar -zxf oras_0.16.0_*.tar.gz -C oras-install/
-        mv oras-install/oras /usr/local/bin/
+        mv oras-install/oras $GITHUB_WORKSPACE/
         rm -rf oras_0.16.0_*.tar.gz oras-install/
-        oras version
+        $GITHUB_WORKSPACE/oras version
     - name: Build and upload db
       run: |
         mkdir vdb_data
@@ -41,7 +41,7 @@ jobs:
         ls -lh vdb_data
         cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/$IMAGE_NAME:v1 \
+        $GITHUB_WORKSPACE/oras push ghcr.io/$IMAGE_NAME:v1 \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
           ./data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
