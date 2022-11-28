@@ -1,6 +1,6 @@
 # Introduction
 
-Pre-built vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan)
+Pre-built vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan). The database is built on a `self-hosted` runner since github hosted runners are failing to handle the database size which is over 3 GB.
 
 ## Manual download
 
