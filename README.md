@@ -1,6 +1,9 @@
 # Introduction
 
-Pre-built vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan)
+Pre-built vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan) including OS and application vulnerabilities. Following VDB settings were used:
+
+- NVD_START_YEAR: 2018
+- GITHUB_PAGE_COUNT: 5
 
 ## Manual download
 
