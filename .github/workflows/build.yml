@@ -22,7 +22,7 @@ jobs:
         path: vulnerability-db
     - uses: actions/checkout@v3
       with:
-        repository: ngcloudsec/vuln-list
+        repository: AppThreat/vuln-list
         path: vuln-list
         fetch-depth: '1'
     - name: Set up Python
@@ -47,8 +47,8 @@ jobs:
         oras push ghcr.io/$IMAGE_NAME:v1 \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
-          ./data.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar \
-          ./data.index.vdb:application/vnd.ngcloudsec.vdb.layer.v1+tar
+          ./data.vdb:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
