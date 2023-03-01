@@ -44,11 +44,11 @@ jobs:
         ls -lh vdb_cache
         cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/$IMAGE_NAME:v1 \
+        oras push ghcr.io/$IMAGE_NAME:v5 \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
-          ./data.vdb:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb:application/vnd.appthreat.vdb.layer.v1+tar
+          ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
