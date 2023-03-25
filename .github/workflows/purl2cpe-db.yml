@@ -35,8 +35,8 @@ jobs:
         ls -l purl2cpe.db
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/$IMAGE_NAME:v1 \
-          --config ../config-purl.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../annotations-purl.json \
+          --config ./config-purl.json:application/vnd.oras.config.v1+json \
+          --annotation-file ./annotations-purl.json \
           ./purl2cpe.db:application/vnd.appthreat.purl2cpe.layer.v1+tar \
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
