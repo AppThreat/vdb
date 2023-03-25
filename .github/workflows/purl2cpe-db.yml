@@ -31,7 +31,7 @@ jobs:
         python -m pip install PyYaml tqdm
     - name: Build database
       run: |
-        python purl2cpe/utilities/sqlite_loader.py purl2cpe/data -o purl2cpe.db
+        python purl2cpe/utilities/sqlite_loader.py purl2cpe/data -o purl2cpe.db --quiet
         ls -l purl2cpe.db
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/$IMAGE_NAME:v1 \
