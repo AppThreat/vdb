@@ -62,8 +62,7 @@ jobs:
         cd vdb_data
         aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws
         oras push public.ecr.aws/$IMAGE_NAME:v5 \
-          --config ../config.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../annotations.json \
+          --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
       env:
