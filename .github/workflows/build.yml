@@ -60,7 +60,7 @@ jobs:
     - name: Release public ecr
       run: |
         cd vdb_data
-        aws ecr-public get-login-password --region us-east-1 | oras login public.ecr.aws/appthreat -u AWS --password-stdin
+        aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws/appthreat
         oras push public.ecr.aws/$IMAGE_NAME:v5 \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
