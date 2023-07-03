@@ -15,7 +15,6 @@ To download this database manually, use the [ORAS cli](https://oras.land/cli/)
 ```bash
 export VDB_HOME=$HOME/vdb
 oras pull public.ecr.aws/appthreat/vdb:v5 -o $VDB_HOME
-# oras pull public.ecr.aws/appthreat/purl2cpe:v1 -o $VDB_HOME
 ```
 
 ```bash
