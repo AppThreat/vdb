@@ -57,16 +57,16 @@ jobs:
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
 
-    - name: Release public ecr
-      run: |
-        cd vdb_data
-        aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws
-        oras push public.ecr.aws/$IMAGE_NAME:v5 \
-          --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
-      env:
-        REGISTRY: public.ecr.aws
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+    # - name: Release public ecr
+    #   run: |
+    #     cd vdb_data
+    #     aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws
+    #     oras push public.ecr.aws/$IMAGE_NAME:v5 \
+    #       --artifact-type application/vnd.oras.config.v1+json \
+    #       ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
+    #       ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
+    #   env:
+    #     REGISTRY: public.ecr.aws
+    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
