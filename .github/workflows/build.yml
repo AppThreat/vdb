@@ -17,7 +17,7 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.5.2'
+        ref: 'v5.5.1'
     - uses: actions/checkout@v3
       with:
         repository: AppThreat/vuln-list
