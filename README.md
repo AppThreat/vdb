@@ -35,7 +35,7 @@ export VDB_HOME=$HOME/vdb
 export RAFS_OUT=rafs_out
 oras pull ghcr.io/appthreat/vdb:v5-rafs -o $RAFS_OUT
 nydus-image unpack --blob $RAFS_OUT/data.rafs --output $VDB_HOME/vdb.tar --bootstrap $RAFS_OUT/meta.rafs
-tar -C $VDB_HOME -xf vdb.tar
+tar -C $VDB_HOME -xf $VDB_HOME/vdb.tar
 rm $VDB_HOME/vdb.tar
 ```
 
