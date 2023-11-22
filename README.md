@@ -14,7 +14,8 @@ To download this database manually, use the [ORAS cli](https://oras.land/cli/)
 
 ```bash
 export VDB_HOME=$HOME/vdb
-oras pull public.ecr.aws/appthreat/vdb:v5 -o $VDB_HOME
+oras pull ghcr.io/appthreat/vdb:v5 -o $VDB_HOME
+# oras pull public.ecr.aws/appthreat/vdb:v5 -o $VDB_HOME
 ```
 
 ```bash
@@ -24,6 +25,19 @@ oras pull ghcr.io/appthreat/vdb:v5 -o $VDB_HOME
 ```
 
 dep-scan would automatically use this database for all the scans using the environment variable `VDB_HOME`.
+
+## Registry Accelerated File System (RAFS) format
+
+vdb is also available in a high-performance compression format called RAFS created using [nydus](https://nydus.dev). On Linux and Intel Mac, use the [nydus-image tool](https://github.com/dragonflyoss/nydus/releases/latest) to unpack and convert the vdb data into a tar file as shown.
+
+```bash
+export VDB_HOME=$HOME/vdb
+export RAFS_OUT=rafs_out
+oras pull ghcr.io/appthreat/vdb:v5-rafs -o $RAFS_OUT
+nydus-image unpack --blob $RAFS_OUT/data.rafs --output $VDB_HOME/vdb.tar --bootstrap $RAFS_OUT/meta.rafs
+tar -C $VDB_HOME -xf vdb.tar
+rm $VDB_HOME/vdb.tar
+```
 
 ## Private on-premise registry
 
