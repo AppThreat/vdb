@@ -17,7 +17,7 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.5.1'
+        ref: 'v5.5.3'
     - uses: actions/checkout@v3
       with:
         repository: AppThreat/vuln-list
@@ -27,6 +27,13 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
+    - name: setup nydus
+      run: |
+        curl -LO https://github.com/dragonflyoss/nydus/releases/download/v2.2.4/nydus-static-v2.2.4-linux-amd64.tgz
+        tar -xvf nydus-static-v2.2.4-linux-amd64.tgz
+        chmod +x nydus-static/*
+        mv nydus-static/* /usr/local/bin/
+        rm -rf nydus-static-v2.2.4-linux-amd64.tgz nydus-static
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -34,7 +41,7 @@ jobs:
         cd vulnerability-db && pip install ".[dev]"
     - name: Build and upload db
       run: |
-        mkdir vdb_data vdb_cache
+        mkdir vdb_data vdb_cache rafs_out
         zip -q -r vuln-list.zip ./vuln-list/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list/
@@ -48,6 +55,14 @@ jobs:
           --annotation-file ../annotations.json \
           ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
+        cd ..
+        nydus-image create -t dir-rafs --blob-id appthreat-vdb-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
+        cd rafs_out
+        oras push ghcr.io/$IMAGE_NAME:v5-rafs \
+          --config ../config.json:application/vnd.oras.config.v1+json \
+          --annotation-file ../annotations.json \
+          ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
+          ./meta.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         PYTHONPATH: vulnerability-db
