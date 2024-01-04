@@ -1,0 +1,8 @@
+{
+    "$config": {
+        "org.opencontainers.image.title": "vdb-10y",
+        "org.opencontainers.image.vendor": "appthreat",
+        "org.opencontainers.image.licenses": "Apache-2.0",
+        "org.opencontainers.image.description": "Pre-built vulnerability database for AppThreat dep-scan"
+    }
+}
