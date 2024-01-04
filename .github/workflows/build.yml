@@ -90,16 +90,14 @@ jobs:
         cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/appthreat/vdb-10y:v5 \
-          --config ../config-10y.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../annotations-10y.json \
+          --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
         nydus-image create -t dir-rafs --blob-id appthreat-vdb-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
         oras push ghcr.io/appthreat/vdb-10y:v5-rafs \
-          --config ../config-10y.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../annotations-10y.json \
+          --artifact-type application/vnd.oras.config.v1+json \
           ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
           ./meta.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar
       env:
