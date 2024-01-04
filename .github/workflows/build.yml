@@ -78,6 +78,7 @@ jobs:
         fetch-depth: '1'
     - name: Build and upload db - 2014
       run: |
+        cd $GITHUB_WORKSPACE
         rm -rf vdb_data vdb_cache rafs_out
         mkdir vdb_data vdb_cache rafs_out
         zip -q -r vuln-list.zip ./vuln-list2/
