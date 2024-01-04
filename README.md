@@ -5,7 +5,7 @@ Pre-built databases:
 - purl2cpe database for [cdxgen](https://github.com/CycloneDX/cdxgen) - Unused
 - vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan), including OS and application vulnerabilities. The following VDB settings were used:
 
-- NVD_START_YEAR: 2018
+- NVD_START_YEAR: 2018 or 2014
 - GITHUB_PAGE_COUNT: 5
 
 ## Manual download
@@ -15,13 +15,13 @@ To download this database manually, use the [ORAS cli](https://oras.land/cli/)
 ```bash
 export VDB_HOME=$HOME/vdb
 oras pull ghcr.io/appthreat/vdb:v5 -o $VDB_HOME
-# oras pull public.ecr.aws/appthreat/vdb:v5 -o $VDB_HOME
 ```
+
+Use the name `vdb-10y`, to download a larger database with data from 2014.
 
 ```bash
 export VDB_HOME=$HOME/vdb
-oras pull ghcr.io/appthreat/vdb:v5 -o $VDB_HOME
-# oras pull ghcr.io/appthreat/purl2cpe:v1 -o $VDB_HOME
+oras pull ghcr.io/appthreat/vdb-10y:v5 -o $VDB_HOME
 ```
 
 dep-scan would automatically use this database for all the scans using the environment variable `VDB_HOME`.
@@ -38,6 +38,8 @@ nydus-image unpack --blob $RAFS_OUT/data.rafs --output $VDB_HOME/vdb.tar --boots
 tar -C $VDB_HOME -xf $VDB_HOME/vdb.tar
 rm $VDB_HOME/vdb.tar
 ```
+
+When using depscan, the above steps are performed automatically based on the presence of `nydus-image` in the PATH.
 
 ## Private on-premise registry
 
