@@ -94,7 +94,7 @@ jobs:
           ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
-        nydus-image create -t dir-rafs --blob-id appthreat-vdb-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
+        nydus-image create -t dir-rafs --blob-id appthreat-vdb-10y-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
         oras push ghcr.io/appthreat/vdb-10y:v5-rafs \
           --artifact-type application/vnd.oras.config.v1+json \
