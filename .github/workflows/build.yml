@@ -90,8 +90,8 @@ jobs:
         cd vdb_data
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/appthreat/vdb-10y:v5 \
-          --config ../config.json:application/vnd.oras.config.v1+json \
-          --annotation-file ../annotations.json \
+          --config ../config-10y.json:application/vnd.oras.config.v1+json \
+          --annotation-file ../annotations-10y.json \
           ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
