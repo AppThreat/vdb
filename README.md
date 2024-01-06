@@ -43,4 +43,4 @@ When using depscan, the above steps are performed automatically based on the pre
 
 ## Private on-premise registry
 
-A private registry is usually not required since the entire vdb comprises of only two files - an index and a db. Any mounted share is usually sufficient. If you are looking for your own private registry, you can try [Zot Registry](https://zotregistry.io/v1.4.3/). In addition to Zot, ORAS cli can work with [many](https://oras.land/docs/adopters) OCI-native container image registries.
+A private registry is usually not required since the entire vdb comprises of only two files - an index and a db. Any mounted share is usually sufficient. If you are looking for your private registry, you can try [Zot Registry](https://zotregistry.io/v1.4.3/). In addition to Zot, ORAS cli can work with [many](https://oras.land/docs/adopters) OCI-native container image registries.
