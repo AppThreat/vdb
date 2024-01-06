@@ -5,8 +5,8 @@ Pre-built databases:
 - purl2cpe database for [cdxgen](https://github.com/CycloneDX/cdxgen) - Unused
 - vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan), including OS and application vulnerabilities. The following VDB settings were used:
 
-- NVD_START_YEAR: 2018 or 2014
-- GITHUB_PAGE_COUNT: 5
+- NVD_START_YEAR: 2018 or 2014 (10y)
+- GITHUB_PAGE_COUNT: 5 or 10 (10y)
 
 ## Manual download
 
@@ -25,6 +25,17 @@ oras pull ghcr.io/appthreat/vdb-10y:v5 -o $VDB_HOME
 ```
 
 dep-scan would automatically use this database for all the scans using the environment variable `VDB_HOME`.
+
+## .tar.gz compressed database
+
+Use the tar.gz compressed database to reduce the download time. depscan would soon use this version as the default.
+
+```bash
+export VDB_HOME=$HOME/vdb
+oras pull ghcr.io/appthreat/vdbgz:v5 -o $VDB_HOME
+tar -xvf *.tar.gz
+rm *.tar.gz
+```
 
 ## Registry Accelerated File System (RAFS) format
 
