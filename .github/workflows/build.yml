@@ -12,19 +12,19 @@ jobs:
   builder:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.5.10'
-    - uses: actions/checkout@v3
+        ref: 'v5.6.1'
+    - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
         path: vuln-list
         fetch-depth: '1'
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: setup nydus
@@ -77,7 +77,7 @@ jobs:
         GITHUB_PAGE_COUNT: 5
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
         path: vuln-list2
