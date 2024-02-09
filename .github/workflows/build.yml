@@ -51,6 +51,8 @@ jobs:
         cd vdb_data
         tar -cvzf data.vdb5.tar.gz data.vdb5
         tar -cvzf data.index.vdb5.tar.gz data.index.vdb5
+        tar -cvJf data.vdb5.tar.xz data.vdb5
+        tar -cvJf data.index.vdb5.tar.xz data.index.vdb5
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/$IMAGE_NAME:v5 \
           --config ../config.json:application/vnd.oras.config.v1+json \
@@ -61,6 +63,10 @@ jobs:
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbxz:v5 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
         nydus-image create -t dir-rafs --blob-id appthreat-vdb-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
@@ -96,6 +102,8 @@ jobs:
         cd vdb_data
         tar -cvzf data.vdb5.tar.gz data.vdb5
         tar -cvzf data.index.vdb5.tar.gz data.index.vdb5
+        tar -cvJf data.vdb5.tar.xz data.vdb5
+        tar -cvJf data.index.vdb5.tar.xz data.index.vdb5
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
         oras push ghcr.io/appthreat/vdb-10y:v5 \
           --artifact-type application/vnd.oras.config.v1+json \
@@ -105,6 +113,10 @@ jobs:
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbxz-10y:v5 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
         nydus-image create -t dir-rafs --blob-id appthreat-vdb-10y-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
