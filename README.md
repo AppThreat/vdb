@@ -14,14 +14,14 @@ To download this database manually, use the [ORAS cli](https://oras.land/cli/)
 
 ```bash
 export VDB_HOME=$HOME/vdb
-oras pull ghcr.io/appthreat/vdb:v5 -o $VDB_HOME
+oras pull ghcr.io/appthreat/vdb:v6 -o $VDB_HOME
 ```
 
 Use the name `vdb-10y`, to download a larger database with data from 2014.
 
 ```bash
 export VDB_HOME=$HOME/vdb
-oras pull ghcr.io/appthreat/vdb-10y:v5 -o $VDB_HOME
+oras pull ghcr.io/appthreat/vdb-10y:v6 -o $VDB_HOME
 ```
 
 dep-scan would automatically use this database for all the scans using the environment variable `VDB_HOME`.
@@ -32,7 +32,7 @@ Use the tar.gz compressed database to reduce the download time. depscan would so
 
 ```bash
 export VDB_HOME=$HOME/vdb
-oras pull ghcr.io/appthreat/vdbgz:v5 -o $VDB_HOME
+oras pull ghcr.io/appthreat/vdbgz:v6 -o $VDB_HOME
 tar -xvf *.tar.gz
 rm *.tar.gz
 ```
@@ -44,7 +44,7 @@ vdb is also available in a high-performance compression format called RAFS creat
 ```bash
 export VDB_HOME=$HOME/vdb
 export RAFS_OUT=rafs_out
-oras pull ghcr.io/appthreat/vdb:v5-rafs -o $RAFS_OUT
+oras pull ghcr.io/appthreat/vdb:v6-rafs -o $RAFS_OUT
 nydus-image unpack --blob $RAFS_OUT/data.rafs --output $VDB_HOME/vdb.tar --bootstrap $RAFS_OUT/meta.rafs
 tar -C $VDB_HOME -xf $VDB_HOME/vdb.tar
 rm $VDB_HOME/vdb.tar
