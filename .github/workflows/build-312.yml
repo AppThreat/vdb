@@ -46,7 +46,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
-        sqlite3 --version
+        python -c "import sqlite3; print(sqlite3.sqlite_version)"
     - name: Build and upload db - 2018
       run: |
         mkdir vdb_data vdb_cache rafs_out
