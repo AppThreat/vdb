@@ -1,4 +1,4 @@
-name: Build and Upload vdb - 310
+name: Build and Upload vdb - 312
 
 on:
   schedule:
@@ -29,7 +29,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10' # We need to build with the lowest supported sqlite version
+        python-version: '3.11'
     - name: setup nydus
       run: |
         curl -LO https://github.com/dragonflyoss/nydus/releases/download/v2.2.4/nydus-static-v2.2.4-linux-amd64.tgz
@@ -42,7 +42,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
-        python -c "import sqlite3; print(sqlite3.sqlite_version)"
+        sqlite3 --version
     - name: Build and upload db - 2018
       run: |
         mkdir vdb_data vdb_cache rafs_out
