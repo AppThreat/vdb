@@ -1,4 +1,4 @@
-name: Build and Upload vdb
+name: Build and Upload vdb - 312
 
 on:
   schedule:
@@ -20,16 +20,20 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.6.4'
+        ref: 'feature/store5'
     - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
         path: vuln-list
         fetch-depth: '1'
+    - uses: actions/setup-sqlite@v1
+      with:
+        sqlite-version: 3.45.2
+        sqlite-year: 2024
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: setup nydus
       run: |
         curl -LO https://github.com/dragonflyoss/nydus/releases/download/v2.2.4/nydus-static-v2.2.4-linux-amd64.tgz
@@ -42,6 +46,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
+        sqlite3 --version
     - name: Build and upload db - 2018
       run: |
         mkdir vdb_data vdb_cache rafs_out
@@ -52,28 +57,28 @@ jobs:
         ls -lh vdb_data
         ls -lh vdb_cache
         cd vdb_data
-        tar -cvzf data.vdb5.tar.gz data.vdb5
-        tar -cvzf data.index.vdb5.tar.gz data.index.vdb5
-        tar -cvJf data.vdb5.tar.xz data.vdb5
-        tar -cvJf data.index.vdb5.tar.xz data.index.vdb5
+        tar -cvzf data.vdb6.tar.gz data.vdb6
+        tar -cvzf data.index.vdb6.tar.gz data.index.vdb6
+        tar -cvJf data.vdb6.tar.xz data.vdb6
+        tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/$IMAGE_NAME:v5 \
+        oras push ghcr.io/$IMAGE_NAME:v6b \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
-          ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
-        oras push ghcr.io/appthreat/vdbgz:v5 \
+          ./data.vdb6:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbgz:v6b \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
-        oras push ghcr.io/appthreat/vdbxz:v5 \
+          ./data.vdb6.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbxz:v6b \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
         nydus-image create -t dir-rafs --blob-id appthreat-vdb-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
-        oras push ghcr.io/$IMAGE_NAME:v5-rafs \
+        oras push ghcr.io/$IMAGE_NAME:v6b-rafs \
           --config ../config.json:application/vnd.oras.config.v1+json \
           --annotation-file ../annotations.json \
           ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
@@ -103,27 +108,27 @@ jobs:
         ls -lh vdb_data
         ls -lh vdb_cache
         cd vdb_data
-        tar -cvzf data.vdb5.tar.gz data.vdb5
-        tar -cvzf data.index.vdb5.tar.gz data.index.vdb5
-        tar -cvJf data.vdb5.tar.xz data.vdb5
-        tar -cvJf data.index.vdb5.tar.xz data.index.vdb5
+        tar -cvzf data.vdb6.tar.gz data.vdb6
+        tar -cvzf data.index.vdb6.tar.gz data.index.vdb6
+        tar -cvJf data.vdb6.tar.xz data.vdb6
+        tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/appthreat/vdb-10y:v5 \
+        oras push ghcr.io/appthreat/vdb-10y:v6b \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
-        oras push ghcr.io/appthreat/vdbgz-10y:v5 \
+          ./data.vdb6:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbgz-10y:v6b \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
-        oras push ghcr.io/appthreat/vdbxz-10y:v5 \
+          ./data.vdb6.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
+        oras push ghcr.io/appthreat/vdbxz-10y:v6b \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         cd ..
         nydus-image create -t dir-rafs --blob-id appthreat-vdb-10y-v5 --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
         cd rafs_out
-        oras push ghcr.io/appthreat/vdb-10y:v5-rafs \
+        oras push ghcr.io/appthreat/vdb-10y:v6b-rafs \
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
           ./meta.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar
@@ -140,10 +145,10 @@ jobs:
     #   run: |
     #     cd vdb_data
     #     aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws
-    #     oras push public.ecr.aws/$IMAGE_NAME:v5 \
+    #     oras push public.ecr.aws/$IMAGE_NAME:v6b \
     #       --artifact-type application/vnd.oras.config.v1+json \
-    #       ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
-    #       ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
+    #       ./data.vdb6:application/vnd.appthreat.vdb.layer.v1+tar \
+    #       ./data.index.vdb6:application/vnd.appthreat.vdb.layer.v1+tar
     #   env:
     #     REGISTRY: public.ecr.aws
     #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
