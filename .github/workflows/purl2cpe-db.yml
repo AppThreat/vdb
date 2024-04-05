@@ -37,12 +37,20 @@ jobs:
       run: |
         python purl2cpe/utilities/sqlite_loader.py purl2cpe/data -o purl2cpe.db --quiet
         rm -rf purl2cpe
-        ls -l purl2cpe.db
+        zstd --ultra purl2cpe.db
+        tar -cvJf purl2cpe.db.tar.xz purl2cpe.db
+        ls -lh
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
+        oras push ghcr.io/appthreat/purl2cpezst:v1 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./purl2cpe.db.zst:application/vnd.appthreat.vdb.layer.v1+zst
+        oras push ghcr.io/appthreat/purl2cpexz:v1 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./purl2cpe.db.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         oras push ghcr.io/$IMAGE_NAME:v1 \
           --config ./config-purl.json:application/vnd.oras.config.v1+json \
           --annotation-file ./annotations-purl.json \
-          ./purl2cpe.db:application/vnd.appthreat.purl2cpe.layer.v1+tar \
+          ./purl2cpe.db:application/vnd.appthreat.purl2cpe.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_USERNAME: ${{ github.actor }}
