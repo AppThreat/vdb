@@ -14,6 +14,15 @@ To download this database manually, use the [ORAS cli](https://oras.land/cli/)
 
 ```bash
 export VDB_HOME=$HOME/vdb
+oras pull ghcr.io/appthreat/vdbzst:v6 -o $VDB_HOME
+zstd -d *.zst
+rm *.zst
+```
+
+Or use the xz version.
+
+```bash
+export VDB_HOME=$HOME/vdb
 oras pull ghcr.io/appthreat/vdbxz:v6 -o $VDB_HOME
 tar -xvf *.tar.xz
 rm *.tar.xz
@@ -23,6 +32,7 @@ Use the name `vdb-10y`, to download a larger database with data from 2014.
 
 ```bash
 export VDB_HOME=$HOME/vdb
+# ghcr.io/appthreat/vdbzst-10y:v6
 oras pull ghcr.io/appthreat/vdbxz-10y:v6 -o $VDB_HOME
 tar -xvf *.tar.xz
 rm *.tar.xz
