@@ -41,7 +41,7 @@ jobs:
         cd vulnerability-db && pip install ".[dev]"
     - name: Build and upload db - 2018
       run: |
-        mkdir vdb_data vdb_cache rafs_out
+        mkdir vdb_data vdb_cache
         zip -q -r vuln-list.zip ./vuln-list/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list/
@@ -54,10 +54,10 @@ jobs:
         tar -cvJf data.vdb6.tar.xz data.vdb6
         tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/appthreat/vdbzstd:v6 \
+        oras push ghcr.io/appthreat/vdbzst:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd \
-          ./data.index.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
         oras push ghcr.io/appthreat/vdbxz:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
@@ -78,8 +78,8 @@ jobs:
     - name: Build and upload db - 2014
       run: |
         cd $GITHUB_WORKSPACE
-        rm -rf vdb_data vdb_cache rafs_out
-        mkdir vdb_data vdb_cache rafs_out
+        rm -rf vdb_data vdb_cache
+        mkdir vdb_data vdb_cache
         zip -q -r vuln-list.zip ./vuln-list2/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list2/
@@ -92,10 +92,10 @@ jobs:
         tar -cvJf data.vdb6.tar.xz data.vdb6
         tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        oras push ghcr.io/appthreat/vdbzstd-10y:v6 \
+        oras push ghcr.io/appthreat/vdbzst-10y:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
-          ./data.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd \
-          ./data.index.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
         oras push ghcr.io/appthreat/vdbxz-10y:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
@@ -108,17 +108,3 @@ jobs:
         GITHUB_PAGE_COUNT: 10
         NVD_START_YEAR: 2014
         GITHUB_USERNAME: ${{ github.actor }}
-
-    # - name: Release public ecr
-    #   run: |
-    #     cd vdb_data
-    #     aws ecr-public get-login-password --region us-east-1 | oras login -u AWS --password-stdin public.ecr.aws
-    #     oras push public.ecr.aws/$IMAGE_NAME:v6 \
-    #       --artifact-type application/vnd.oras.config.v1+json \
-    #       ./data.vdb6:application/vnd.appthreat.vdb.layer.v1+tar \
-    #       ./data.index.vdb6:application/vnd.appthreat.vdb.layer.v1+tar
-    #   env:
-    #     REGISTRY: public.ecr.aws
-    #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-    #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #     AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
