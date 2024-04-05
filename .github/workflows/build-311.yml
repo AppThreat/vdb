@@ -49,9 +49,15 @@ jobs:
         ls -lh vdb_data
         ls -lh vdb_cache
         cd vdb_data
+        zstd --ultra data.index.vdb6
+        zstd --ultra data.vdb6
         tar -cvJf data.vdb6.tar.xz data.vdb6
         tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
+        oras push ghcr.io/appthreat/vdbzstd:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd \
+          ./data.index.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd
         oras push ghcr.io/appthreat/vdbxz:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
@@ -81,9 +87,15 @@ jobs:
         ls -lh vdb_data
         ls -lh vdb_cache
         cd vdb_data
+        zstd --ultra data.index.vdb6
+        zstd --ultra data.vdb6
         tar -cvJf data.vdb6.tar.xz data.vdb6
         tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
+        oras push ghcr.io/appthreat/vdbzstd-10y:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd \
+          ./data.index.vdb6.zstd:application/vnd.appthreat.vdb.layer.v1+zstd
         oras push ghcr.io/appthreat/vdbxz-10y:v6 \
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
