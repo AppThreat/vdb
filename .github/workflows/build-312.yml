@@ -1,4 +1,4 @@
-name: Build and Upload vdb - 311
+name: Build and Upload vdb - 312
 
 on:
   schedule:
@@ -29,7 +29,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Trim CI agent
       run: |
         chmod +x contrib/free_disk_space.sh
@@ -62,14 +62,26 @@ jobs:
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+
+        echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+        oras push codeberg.org/appthreat/vdbzst:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+        oras push codeberg.org/appthreat/vdbxz:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 5
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
+        CODEBERG_USERNAME: appthreat
     - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
@@ -100,11 +112,22 @@ jobs:
           --artifact-type application/vnd.oras.config.v1+json \
           ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
           ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+        echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+        oras push codeberg.org/appthreat/vdbzst-10y:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+        oras push codeberg.org/appthreat/vdbxz-10y:v6 \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 10
         NVD_START_YEAR: 2014
         GITHUB_USERNAME: ${{ github.actor }}
+        CODEBERG_USERNAME: appthreat
