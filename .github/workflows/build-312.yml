@@ -74,7 +74,7 @@ jobs:
           ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
@@ -123,7 +123,7 @@ jobs:
           ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        CODEBERG_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
