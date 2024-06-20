@@ -82,6 +82,7 @@ jobs:
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
         CODEBERG_USERNAME: appthreat
+      continue-on-error: true
     - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
@@ -131,3 +132,4 @@ jobs:
         NVD_START_YEAR: 2014
         GITHUB_USERNAME: ${{ github.actor }}
         CODEBERG_USERNAME: appthreat
+      continue-on-error: true
