@@ -20,7 +20,7 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.7.3'
+        ref: 'v5.7.4'
     - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
@@ -87,7 +87,7 @@ jobs:
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
-        GITHUB_PAGE_COUNT: 5
+        GITHUB_PAGE_COUNT: 10
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
     - uses: actions/checkout@v4
@@ -136,7 +136,7 @@ jobs:
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
-        GITHUB_PAGE_COUNT: 10
+        GITHUB_PAGE_COUNT: 20
         NVD_START_YEAR: 2014
         GITHUB_USERNAME: ${{ github.actor }}
 
