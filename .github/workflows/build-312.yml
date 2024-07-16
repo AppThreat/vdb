@@ -95,6 +95,7 @@ jobs:
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
         CODEBERG_USERNAME: appthreat
+        VDB_METADATA_APP_ONLY: true
       continue-on-error: true
   builder:
     runs-on: ubuntu-latest

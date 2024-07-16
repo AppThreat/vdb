@@ -28,7 +28,17 @@ tar -xvf *.tar.xz
 rm *.tar.xz
 ```
 
-Use the name `vdb-10y`, to download a larger database with data from 2014.
+Use the name suffix `-app`, to download a database containing only application vulnerabilities.
+
+```bash
+export VDB_HOME=$HOME/vdb
+# ghcr.io/appthreat/vdbzst-app:v6
+oras pull ghcr.io/appthreat/vdbxz-app:v6 -o $VDB_HOME
+tar -xvf *.tar.xz
+rm *.tar.xz
+```
+
+Use the name suffix `-10y`, to download a larger database with data from 2014.
 
 ```bash
 export VDB_HOME=$HOME/vdb
