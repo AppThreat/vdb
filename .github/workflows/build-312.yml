@@ -129,6 +129,7 @@ jobs:
     - name: Build and upload db - 2018
       run: |
         mkdir vdb_data vdb_cache
+        rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
         zip -q -r vuln-list.zip ./vuln-list/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list/
@@ -184,6 +185,7 @@ jobs:
         cd $GITHUB_WORKSPACE
         rm -rf vdb_data vdb_cache
         mkdir vdb_data vdb_cache
+        rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
         zip -q -r vuln-list.zip ./vuln-list2/
         mv vuln-list.zip vdb_cache/
         rm -rf ./vuln-list2/
