@@ -21,6 +21,19 @@ jobs:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
         ref: 'master'
+    - uses: actions/checkout@v4
+      with:
+        repository: AppThreat/vuln-list
+        path: vuln-list
+        fetch-depth: '1'
+        sparse-checkout: |
+          nvd/2018
+          nvd/2019
+          nvd/2020
+          nvd/2021
+          nvd/2022
+          nvd/2023
+          nvd/2024
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -34,11 +47,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
-    - name: Build and upload db - 2018
+    - name: Build and upload app db - 2018
       run: |
-        mkdir vdb_data
-        python vulnerability-db/vdb/cli.py --cache
+        mkdir vdb_data vdb_cache
+        zip -q -r vuln-list.zip ./vuln-list/
+        mv vuln-list.zip vdb_cache/
+        rm -rf ./vuln-list/
+        python vulnerability-db/vdb/cli.py --cache-os
         ls -lh vdb_data
+        ls -lh vdb_cache
         cd vdb_data
         zstd --ultra data.index.vdb6
         zstd --ultra data.vdb6
@@ -72,6 +89,7 @@ jobs:
         CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
+        VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 30
         NVD_START_YEAR: 2018
         GITHUB_USERNAME: ${{ github.actor }}
