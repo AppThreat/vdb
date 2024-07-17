@@ -96,6 +96,10 @@ jobs:
         GITHUB_USERNAME: ${{ github.actor }}
         CODEBERG_USERNAME: appthreat
         VDB_METADATA_APP_ONLY: true
+        VDB_IGNORE_ALMALINUX: true
+        VDB_IGNORE_ALPINE: true
+        VDB_IGNORE_DEBIAN: true
+        VDB_IGNORE_ROCKYLINUX: true
       continue-on-error: true
   builder:
     runs-on: ubuntu-latest
