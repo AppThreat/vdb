@@ -2,7 +2,6 @@
 
 Pre-built databases:
 
-- purl2cpe database for [cdxgen](https://github.com/CycloneDX/cdxgen) - Unused
 - vulnerability database for [dep-scan](https://github.com/AppThreat/dep-scan), including OS and application vulnerabilities. The following VDB settings were used:
 
 - NVD_START_YEAR: 2018 or 2014 (10y db)
