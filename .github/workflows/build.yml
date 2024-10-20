@@ -1,4 +1,4 @@
-name: Build and Upload vdb
+name: Build and Upload vdb5
 
 on:
   schedule:
@@ -20,7 +20,7 @@ jobs:
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
-        ref: 'v5.7.6'
+        ref: 'v5.7.7'
     - uses: actions/checkout@v4
       with:
         repository: AppThreat/vuln-list
