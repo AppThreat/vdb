@@ -106,7 +106,19 @@ jobs:
       with:
         repository: AppThreat/vuln-list
         path: vuln-list2
-        fetch-depth: '1'
+        fetch-depth: "1"
+        sparse-checkout: |
+          nvd/2014
+          nvd/2015
+          nvd/2016
+          nvd/2017
+          nvd/2018
+          nvd/2019
+          nvd/2020
+          nvd/2021
+          nvd/2022
+          nvd/2023
+          nvd/2024
     - name: Build and upload db - 2014
       run: |
         cd $GITHUB_WORKSPACE
