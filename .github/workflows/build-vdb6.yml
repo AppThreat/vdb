@@ -20,7 +20,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.1"
+          ref: "v6.2.2"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -113,7 +113,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.1"
+          ref: "v6.2.2"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -210,7 +210,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.1"
+          ref: "v6.2.2"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
