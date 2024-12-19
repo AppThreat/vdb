@@ -20,7 +20,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.2"
+          ref: "v6.2.3"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -74,17 +74,17 @@ jobs:
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
 
-          echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          oras push codeberg.org/appthreat/vdbzst-app:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push codeberg.org/appthreat/vdbxz-app:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+          # oras push codeberg.org/appthreat/vdbzst-app:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          # oras push codeberg.org/appthreat/vdbxz-app:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
@@ -113,7 +113,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.2"
+          ref: "v6.2.3"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -171,17 +171,17 @@ jobs:
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
 
-          echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          oras push codeberg.org/appthreat/vdbzst-app-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push codeberg.org/appthreat/vdbxz-app-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+          # oras push codeberg.org/appthreat/vdbzst-app-10y:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          # oras push codeberg.org/appthreat/vdbxz-app-10y:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
@@ -210,7 +210,7 @@ jobs:
         with:
           repository: AppThreat/vulnerability-db
           path: vulnerability-db
-          ref: "v6.2.2"
+          ref: "v6.2.3"
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -248,17 +248,17 @@ jobs:
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
 
-          echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          oras push codeberg.org/appthreat/vdbzst:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push codeberg.org/appthreat/vdbxz:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+          # oras push codeberg.org/appthreat/vdbzst:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          # oras push codeberg.org/appthreat/vdbxz:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
@@ -269,7 +269,6 @@ jobs:
           NVD_START_YEAR: 2018
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
-        continue-on-error: true
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -303,17 +302,18 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          oras push codeberg.org/appthreat/vdbzst-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push codeberg.org/appthreat/vdbxz-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+
+          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
+          # oras push codeberg.org/appthreat/vdbzst-10y:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          # oras push codeberg.org/appthreat/vdbxz-10y:v6 \
+          #   --artifact-type application/vnd.oras.config.v1+json \
+          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
@@ -324,4 +324,3 @@ jobs:
           NVD_START_YEAR: 2014
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
-        continue-on-error: true
