@@ -218,7 +218,8 @@ jobs:
           fetch-depth: "1"
       - name: Install dependencies
         run: |
-          cd vulnerability-db && pip install ".[dev]"
+          sudo python3 -m pip config set global.break-system-packages true
+          cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
       - name: Build and upload db - 2018
         run: |
           mkdir vdb_data vdb_cache
@@ -226,7 +227,7 @@ jobs:
           zip -q -r vuln-list.zip ./vuln-list/
           mv vuln-list.zip vdb_cache/
           rm -rf ./vuln-list/
-          python vulnerability-db/vdb/cli.py --cache-os
+          python3 vulnerability-db/vdb/cli.py --cache-os
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
@@ -281,7 +282,7 @@ jobs:
           zip -q -r vuln-list.zip ./vuln-list2/
           mv vuln-list.zip vdb_cache/
           rm -rf ./vuln-list2/
-          python vulnerability-db/vdb/cli.py --cache-os
+          python3 vulnerability-db/vdb/cli.py --cache-os
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
