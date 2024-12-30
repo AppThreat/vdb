@@ -200,7 +200,7 @@ jobs:
         continue-on-error: true
 
   builder:
-    runs-on: [self-hosted, ubuntu]
+    runs-on: [self-hosted, arm64]
     permissions:
       contents: write
       packages: write
