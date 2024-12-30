@@ -218,8 +218,6 @@ jobs:
           fetch-depth: "1"
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine build
           cd vulnerability-db && pip install ".[dev]"
       - name: Build and upload db - 2018
         run: |
