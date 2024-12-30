@@ -216,6 +216,7 @@ jobs:
           repository: AppThreat/vuln-list
           path: vuln-list
           fetch-depth: "1"
+      - uses: oras-project/setup-oras@v1
       - name: Install dependencies
         run: |
           python3 -m pip config set global.break-system-packages true
