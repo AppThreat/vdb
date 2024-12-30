@@ -218,7 +218,7 @@ jobs:
           fetch-depth: "1"
       - name: Install dependencies
         run: |
-          sudo python3 -m pip config set global.break-system-packages true
+          python3 -m pip config set global.break-system-packages true
           cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
       - name: Build and upload db - 2018
         run: |
