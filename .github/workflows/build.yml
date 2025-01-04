@@ -26,6 +26,7 @@ jobs:
         repository: AppThreat/vuln-list
         path: vuln-list
         fetch-depth: '1'
+    - uses: oras-project/setup-oras@v1
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
