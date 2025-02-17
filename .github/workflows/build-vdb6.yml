@@ -47,7 +47,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
+          pip install -U "huggingface_hub[cli]"
+          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && pip install ".[dev]"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
         run: |
           mkdir vdb_data vdb_cache
@@ -74,7 +78,7 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb --include "*.vdb6" . app
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst-app:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
@@ -145,7 +149,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
+          pip install -U "huggingface_hub[cli]"
+          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && pip install ".[dev]"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
         run: |
           mkdir vdb_data vdb_cache
@@ -172,7 +180,7 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb --include "*.vdb6" . app-10y
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst-app-10y:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
@@ -222,7 +230,11 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip config set global.break-system-packages true
+          pip install -U "huggingface_hub[cli]"
+          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload db - 2018
         run: |
           mkdir vdb_data vdb_cache
@@ -249,7 +261,7 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb --include "*.vdb6" . app-os
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
@@ -304,7 +316,7 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb --include "*.vdb6" . app-os-10y
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst-10y:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
