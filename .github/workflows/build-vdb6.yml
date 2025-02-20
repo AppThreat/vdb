@@ -212,7 +212,7 @@ jobs:
         continue-on-error: true
 
   builder:
-    runs-on: [self-hosted, linux, arm64]
+    runs-on: [macos-hosted, arm64]
     permissions:
       contents: write
       packages: write
@@ -262,8 +262,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          /home/builder/.local/bin/huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os/data.vdb6
-          /home/builder/.local/bin/huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os/data.index.vdb6
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os/data.vdb6
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
@@ -319,8 +319,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          /home/builder/.local/bin/huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os-10y/data.vdb6
-          /home/builder/.local/bin/huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os-10y/data.index.vdb6
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os-10y/data.vdb6
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os-10y/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
           # oras push codeberg.org/appthreat/vdbzst-10y:v6 \
           #   --artifact-type application/vnd.oras.config.v1+json \
