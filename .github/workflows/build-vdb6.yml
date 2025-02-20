@@ -48,7 +48,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
           pip install -U "huggingface_hub[cli]"
-          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && pip install ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -106,6 +105,7 @@ jobs:
           VDB_IGNORE_ALPINE: true
           VDB_IGNORE_DEBIAN: true
           VDB_IGNORE_ROCKYLINUX: true
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
   app_10y_builder:
@@ -151,7 +151,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
           pip install -U "huggingface_hub[cli]"
-          huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && pip install ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -209,6 +208,7 @@ jobs:
           VDB_IGNORE_ALPINE: true
           VDB_IGNORE_DEBIAN: true
           VDB_IGNORE_ROCKYLINUX: true
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
   builder:
@@ -233,7 +233,6 @@ jobs:
         run: |
           python3 -m pip config set global.break-system-packages true
           python3 -m pip install -U "huggingface_hub[cli]"
-          /home/builder/.local/bin/huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -286,6 +285,7 @@ jobs:
           NVD_START_YEAR: 2018
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - uses: actions/checkout@v4
         with:
           repository: AppThreat/vuln-list
@@ -342,3 +342,4 @@ jobs:
           NVD_START_YEAR: 2014
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
