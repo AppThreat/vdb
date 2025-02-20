@@ -238,6 +238,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload db - 2018
         run: |
+          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
           rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
           zip -q -r vuln-list.zip ./vuln-list/
@@ -251,7 +252,6 @@ jobs:
           zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
@@ -293,6 +293,7 @@ jobs:
           fetch-depth: "1"
       - name: Build and upload db - 2014
         run: |
+          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           cd $GITHUB_WORKSPACE
           rm -rf vdb_data vdb_cache
           mkdir vdb_data vdb_cache
@@ -308,7 +309,6 @@ jobs:
           zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst-10y:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
