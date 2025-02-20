@@ -212,7 +212,7 @@ jobs:
         continue-on-error: true
 
   builder:
-    runs-on: [self-hosted, arm64]
+    runs-on: [self-hosted, linux, arm64]
     permissions:
       contents: write
       packages: write
@@ -232,7 +232,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip config set global.break-system-packages true
-          pip install -U "huggingface_hub[cli]"
+          python3 -m pip install -U "huggingface_hub[cli]"
           /home/builder/.local/bin/huggingface-cli login --token $HF_TOKEN --add-to-git-credential
           cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
         env:
