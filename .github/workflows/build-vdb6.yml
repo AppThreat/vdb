@@ -53,6 +53,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
         run: |
+          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
           ls ./vuln-list/ ./vuln-list/nvd/
           zip -q -r vuln-list.zip ./vuln-list/
@@ -73,7 +74,6 @@ jobs:
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app/data.index.vdb6.tar.xz
           zstd --ultra data.index.vdb6
           zstd --ultra data.vdb6
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst-app:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
@@ -158,6 +158,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
         run: |
+          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
           ls ./vuln-list/ ./vuln-list/nvd/
           zip -q -r vuln-list.zip ./vuln-list/
@@ -178,7 +179,6 @@ jobs:
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-10y/data.index.vdb6.tar.xz
           zstd --ultra data.index.vdb6
           zstd --ultra data.vdb6
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst-app-10y:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
