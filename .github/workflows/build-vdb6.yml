@@ -62,21 +62,23 @@ jobs:
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
+          oras push ghcr.io/appthreat/vdbxz-app:v6 \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.tar.xz app/data.vdb6.tar.xz
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app/data.index.vdb6.tar.xz
+          zstd --ultra data.index.vdb6
+          zstd --ultra data.vdb6
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst-app:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push ghcr.io/appthreat/vdbxz-app:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -165,21 +167,23 @@ jobs:
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
+          oras push ghcr.io/appthreat/vdbxz-app-10y:v6 \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.tar.xz app-10y/data.vdb6.tar.xz
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-10y/data.index.vdb6.tar.xz
+          zstd --ultra data.index.vdb6
+          zstd --ultra data.vdb6
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           oras push ghcr.io/appthreat/vdbzst-app-10y:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras push ghcr.io/appthreat/vdbxz-app-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-10y/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-10y/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -248,20 +252,22 @@ jobs:
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbzst:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
           oras push ghcr.io/appthreat/vdbxz:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.tar.xz app-os/data.vdb6.tar.xz
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-os/data.index.vdb6.tar.xz
+          zstd --ultra data.index.vdb6
+          zstd --ultra data.vdb6
+          oras push ghcr.io/appthreat/vdbzst:v6 \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -305,20 +311,22 @@ jobs:
           ls -lh vdb_data
           ls -lh vdb_cache
           cd vdb_data
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
           tar -cvJf data.vdb6.tar.xz data.vdb6
           tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbzst-10y:v6 \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
           oras push ghcr.io/appthreat/vdbxz-10y:v6 \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
             ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.tar.xz app-os-10y/data.vdb6.tar.xz
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-os-10y/data.index.vdb6.tar.xz
+          zstd --ultra data.index.vdb6
+          zstd --ultra data.vdb6
+          oras push ghcr.io/appthreat/vdbzst-10y:v6 \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os-10y/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os-10y/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
