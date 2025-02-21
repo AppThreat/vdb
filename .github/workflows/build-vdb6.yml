@@ -79,6 +79,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.zst app/data.vdb6.zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app/data.index.vdb6.zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -184,6 +186,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.zst app-10y/data.vdb6.zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-10y/data.index.vdb6.zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-10y/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-10y/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -268,6 +272,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.zst app-os/data.vdb6.zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-os/data.index.vdb6.zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
@@ -327,6 +333,8 @@ jobs:
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
             ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
             ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6.zst app-os-10y/data.vdb6.zst
+          huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-os-10y/data.index.vdb6.zst
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.vdb6 app-os-10y/data.vdb6
           huggingface-cli upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os-10y/data.index.vdb6
           # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
