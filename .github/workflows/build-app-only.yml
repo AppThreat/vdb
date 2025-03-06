@@ -2,7 +2,7 @@ name: Build and Upload app only vdb5
 
 on:
   schedule:
-  - cron: "0 */6 * * *"
+  - cron: "10 */6 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io

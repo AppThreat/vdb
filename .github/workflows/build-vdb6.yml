@@ -2,7 +2,7 @@ name: Build and Upload vdb6
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "30 */6 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
