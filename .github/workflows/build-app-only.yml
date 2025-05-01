@@ -34,6 +34,7 @@ jobs:
           nvd/2022
           nvd/2023
           nvd/2024
+          nvd/2025
     - uses: oras-project/setup-oras@v1
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -120,6 +121,7 @@ jobs:
           nvd/2022
           nvd/2023
           nvd/2024
+          nvd/2025
     - name: Build and upload db - 2014
       run: |
         cd $GITHUB_WORKSPACE
