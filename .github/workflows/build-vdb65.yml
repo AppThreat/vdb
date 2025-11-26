@@ -43,7 +43,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
           pip install -U "huggingface_hub[cli]"
-          cd vulnerability-db && pip install ".[dev]"
+          cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2024
@@ -151,7 +151,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
           pip install -U "huggingface_hub[cli]"
-          cd vulnerability-db && pip install ".[dev]"
+          cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
@@ -263,7 +263,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install setuptools wheel twine build
           pip install -U "huggingface_hub[cli]"
-          cd vulnerability-db && pip install ".[dev]"
+          cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload app db - 2018
@@ -353,7 +353,7 @@ jobs:
         run: |
           python3 -m pip config set global.break-system-packages true
           python3 -m pip install -U "huggingface_hub[cli]"
-          cd vulnerability-db && python3 -m pip install ".[dev]" --no-warn-script-location
+          cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload db - 2018
