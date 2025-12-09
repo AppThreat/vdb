@@ -331,7 +331,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
-  builder:
+  os_builder:
     runs-on: [macos-hosted, arm64]
     permissions:
       contents: write
