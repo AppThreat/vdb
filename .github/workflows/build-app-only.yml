@@ -15,13 +15,16 @@ jobs:
       contents: write
       packages: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        persist-credentials: false
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         repository: AppThreat/vulnerability-db
         path: vulnerability-db
         ref: 'v5.8.2'
-    - uses: actions/checkout@v4
+        persist-credentials: false
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         repository: AppThreat/vuln-list
         path: vuln-list
@@ -35,9 +38,10 @@ jobs:
           nvd/2023
           nvd/2024
           nvd/2025
-    - uses: oras-project/setup-oras@v1
+        persist-credentials: false
+    - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: '3.12'
     - name: Trim CI agent
@@ -104,7 +108,7 @@ jobs:
         VDB_IGNORE_ALPINE: true
         VDB_IGNORE_DEBIAN: true
         VDB_IGNORE_ROCKYLINUX: true
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         repository: AppThreat/vuln-list
         path: vuln-list2
@@ -122,6 +126,7 @@ jobs:
           nvd/2023
           nvd/2024
           nvd/2025
+        persist-credentials: false
     - name: Build and upload db - 2014
       run: |
         cd $GITHUB_WORKSPACE
