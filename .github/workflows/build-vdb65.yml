@@ -343,8 +343,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
-  os_builder:
-    runs-on: [macos-hosted, arm64]
+  os_builder_2018:
+    runs-on: ubuntu-hosted
     permissions:
       contents: write
       packages: write
@@ -365,11 +365,20 @@ jobs:
           fetch-depth: "1"
           persist-credentials: false
       - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.12"
+      - name: Trim CI agent
+        run: |
+          chmod +x contrib/free_disk_space.sh
+          ./contrib/free_disk_space.sh
       - name: Install dependencies
         run: |
-          python3 -m pip config set global.break-system-packages true
-          python3 -m pip install -U "huggingface_hub[cli]"
-          cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine build
+          pip install -U "huggingface_hub[cli]"
+          cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload db - 2018
@@ -429,19 +438,50 @@ jobs:
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+  os_builder_2014:
+    runs-on: ubuntu-hosted
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          repository: AppThreat/vulnerability-db
+          path: vulnerability-db
+          ref: "master"
+          persist-credentials: false
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
           repository: AppThreat/vuln-list
           path: vuln-list2
           fetch-depth: "1"
           persist-credentials: false
+      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: "3.12"
+      - name: Trim CI agent
+        run: |
+          chmod +x contrib/free_disk_space.sh
+          ./contrib/free_disk_space.sh
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools wheel twine build
+          pip install -U "huggingface_hub[cli]"
+          cd vulnerability-db && pip install -U ".[dev]"
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - name: Build and upload db - 2014
         run: |
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          cd $GITHUB_WORKSPACE
-          rm -rf vdb_data vdb_cache
           mkdir vdb_data vdb_cache
-          rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
+          rm -rf ./vuln-list2/kevc ./vuln-list2/mariner ./vuln-list2/cvrf/suse/suse
           zip -q -r vuln-list.zip ./vuln-list2/
           mv vuln-list.zip vdb_cache/
           rm -rf ./vuln-list2/
