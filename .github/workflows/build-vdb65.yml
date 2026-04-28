@@ -344,7 +344,7 @@ jobs:
         continue-on-error: true
 
   os_builder_2018:
-    runs-on: ubuntu-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
@@ -440,7 +440,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
   os_builder_2014:
-    runs-on: ubuntu-hosted
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
