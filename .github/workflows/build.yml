@@ -2,7 +2,7 @@ name: Build and Upload vdb5
 
 on:
   schedule:
-  - cron: "20 */6 * * *"
+  - cron: "20 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
@@ -51,7 +51,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
-    - name: Build and upload db - 2018
+    - name: Build and upload db - 2020
       run: |
         mkdir vdb_data vdb_cache rafs_out
         rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
@@ -94,7 +94,7 @@ jobs:
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 10
-        NVD_START_YEAR: 2018
+        NVD_START_YEAR: 2020
         GITHUB_USERNAME: ${{ github.actor }}
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
@@ -102,7 +102,7 @@ jobs:
         path: vuln-list2
         fetch-depth: '1'
         persist-credentials: false
-    - name: Build and upload db - 2014
+    - name: Build and upload db - 2016
       run: |
         cd $GITHUB_WORKSPACE
         rm -rf vdb_data vdb_cache rafs_out
@@ -145,7 +145,7 @@ jobs:
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 20
-        NVD_START_YEAR: 2014
+        NVD_START_YEAR: 2016
         GITHUB_USERNAME: ${{ github.actor }}
 
     # - name: Release public ecr

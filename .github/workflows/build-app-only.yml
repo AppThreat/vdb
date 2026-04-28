@@ -2,7 +2,7 @@ name: Build and Upload app only vdb5
 
 on:
   schedule:
-  - cron: "10 */6 * * *"
+  - cron: "10 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
@@ -30,14 +30,13 @@ jobs:
         path: vuln-list
         fetch-depth: "1"
         sparse-checkout: |
-          nvd/2018
-          nvd/2019
           nvd/2020
           nvd/2021
           nvd/2022
           nvd/2023
           nvd/2024
           nvd/2025
+          nvd/2026
         persist-credentials: false
     - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
     - name: Set up Python
@@ -60,7 +59,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install setuptools wheel twine build
         cd vulnerability-db && pip install ".[dev]"
-    - name: Build and upload db - 2018
+    - name: Build and upload db - 2020
       run: |
         mkdir vdb_data vdb_cache rafs_out
         rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
@@ -101,7 +100,7 @@ jobs:
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 10
-        NVD_START_YEAR: 2018
+        NVD_START_YEAR: 2020
         GITHUB_USERNAME: ${{ github.actor }}
         OSV_EXCLUDE_MALWARE: true
         VDB_IGNORE_ALMALINUX: true
@@ -114,11 +113,9 @@ jobs:
         path: vuln-list2
         fetch-depth: "1"
         sparse-checkout: |
-          nvd/2014
-          nvd/2015
           nvd/2016
           nvd/2017
-          nvd/2018
+          nvd/2020
           nvd/2019
           nvd/2020
           nvd/2021
@@ -126,8 +123,9 @@ jobs:
           nvd/2023
           nvd/2024
           nvd/2025
+          nvd/2026
         persist-credentials: false
-    - name: Build and upload db - 2014
+    - name: Build and upload db - 2016
       run: |
         cd $GITHUB_WORKSPACE
         rm -rf vdb_data vdb_cache rafs_out
@@ -170,7 +168,7 @@ jobs:
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
         GITHUB_PAGE_COUNT: 20
-        NVD_START_YEAR: 2014
+        NVD_START_YEAR: 2016
         GITHUB_USERNAME: ${{ github.actor }}
         OSV_EXCLUDE_MALWARE: true
         VDB_IGNORE_ALMALINUX: true

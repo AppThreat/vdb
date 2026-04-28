@@ -2,7 +2,7 @@ name: Build and Upload vdb 6.5.x
 
 on:
   schedule:
-    - cron: "25 */6 * * *"
+    - cron: "20 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
@@ -32,6 +32,7 @@ jobs:
           sparse-checkout: |
             nvd/2024
             nvd/2025
+            nvd/2026
           persist-credentials: false
       - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
       - name: Set up Python
@@ -136,14 +137,13 @@ jobs:
           path: vuln-list
           fetch-depth: "1"
           sparse-checkout: |
-            nvd/2018
-            nvd/2019
             nvd/2020
             nvd/2021
             nvd/2022
             nvd/2023
             nvd/2024
             nvd/2025
+            nvd/2026
           persist-credentials: false
       - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
       - name: Set up Python
@@ -162,7 +162,7 @@ jobs:
           cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      - name: Build and upload app db - 2018
+      - name: Build and upload app db - 2020
         run: |
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
@@ -215,7 +215,7 @@ jobs:
           VDB_HOME: vdb_data
           VDB_CACHE: vdb_cache
           GITHUB_PAGE_COUNT: 30
-          NVD_START_YEAR: 2018
+          NVD_START_YEAR: 2020
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
           VDB_METADATA_APP_ONLY: true
@@ -248,11 +248,9 @@ jobs:
           path: vuln-list
           fetch-depth: "1"
           sparse-checkout: |
-            nvd/2014
-            nvd/2015
             nvd/2016
             nvd/2017
-            nvd/2018
+            nvd/2020
             nvd/2019
             nvd/2020
             nvd/2021
@@ -260,6 +258,7 @@ jobs:
             nvd/2023
             nvd/2024
             nvd/2025
+            nvd/2026
           persist-credentials: false
       - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
       - name: Set up Python
@@ -278,7 +277,7 @@ jobs:
           cd vulnerability-db && pip install -U ".[dev]"
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      - name: Build and upload app db - 2018
+      - name: Build and upload app db - 2020
         run: |
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
@@ -331,7 +330,7 @@ jobs:
           VDB_HOME: vdb_data
           VDB_CACHE: vdb_cache
           GITHUB_PAGE_COUNT: 30
-          NVD_START_YEAR: 2018
+          NVD_START_YEAR: 2020
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
           VDB_METADATA_APP_ONLY: true
@@ -372,7 +371,7 @@ jobs:
           cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      - name: Build and upload db - 2018
+      - name: Build and upload db - 2020
         run: |
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           mkdir vdb_data vdb_cache
@@ -425,7 +424,7 @@ jobs:
           VDB_HOME: vdb_data
           VDB_CACHE: vdb_cache
           GITHUB_PAGE_COUNT: 10
-          NVD_START_YEAR: 2018
+          NVD_START_YEAR: 2020
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -435,7 +434,7 @@ jobs:
           path: vuln-list2
           fetch-depth: "1"
           persist-credentials: false
-      - name: Build and upload db - 2014
+      - name: Build and upload db - 2016
         run: |
           echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
           cd $GITHUB_WORKSPACE
@@ -490,7 +489,7 @@ jobs:
           VDB_HOME: vdb_data
           VDB_CACHE: vdb_cache
           GITHUB_PAGE_COUNT: 20
-          NVD_START_YEAR: 2014
+          NVD_START_YEAR: 2016
           GITHUB_USERNAME: ${{ github.actor }}
           CODEBERG_USERNAME: appthreat
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
