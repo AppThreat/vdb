@@ -343,7 +343,7 @@ jobs:
         continue-on-error: true
 
   os_builder:
-    runs-on: [macos-hosted, arm64]
+    runs-on: [self-hosted-ubuntu, linux]
     permissions:
       contents: write
       packages: write
