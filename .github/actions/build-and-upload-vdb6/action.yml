@@ -105,7 +105,7 @@ runs:
           oras tag "ghcr.io/${{ inputs.image-xz-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
         fi
 
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
         hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
 
         zstd --ultra data.index.vdb6
@@ -121,8 +121,8 @@ runs:
           oras tag "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
         fi
 
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
         hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
         hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
         hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"

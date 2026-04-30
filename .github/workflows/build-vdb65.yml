@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: appthreat/vdb
+  HF_XET_HIGH_PERFORMANCE: 1
 
 jobs:
   app_2y_builder:
