@@ -1,0 +1,87 @@
+name: 'Setup VDB Build Environment'
+description: 'Checkout repos, install tools and dependencies for VDB build'
+
+inputs:
+  nvd-years:
+    description: 'Comma-separated NVD years for sparse checkout (e.g. "2024,2025,2026")'
+    required: true
+  sparse-checkout:
+    description: 'Whether to use sparse checkout for vuln-list'
+    required: false
+    default: 'true'
+  self-hosted:
+    description: 'Whether running on a self-hosted runner'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+
+  steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        persist-credentials: false
+
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        repository: AppThreat/vulnerability-db
+        path: vulnerability-db
+        ref: 'master'
+        persist-credentials: false
+
+    - name: Checkout vuln-list with sparse checkout
+      if: inputs.sparse-checkout == 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        repository: AppThreat/vuln-list
+        path: vuln-list
+        fetch-depth: '1'
+        sparse-checkout: ${{ inputs.nvd-years }}
+        persist-credentials: false
+
+    - name: Checkout vuln-list full
+      if: inputs.sparse-checkout != 'true'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      with:
+        repository: AppThreat/vuln-list
+        path: vuln-list
+        fetch-depth: '1'
+        persist-credentials: false
+
+    - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
+
+    - name: Set up Python
+      if: inputs.self-hosted != 'true'
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+      with:
+        python-version: '3.12'
+
+    - name: Trim CI agent
+      if: inputs.self-hosted != 'true'
+      shell: bash
+      run: |
+        chmod +x contrib/free_disk_space.sh
+        ./contrib/free_disk_space.sh
+
+    - name: Install dependencies
+      if: inputs.self-hosted != 'true'
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine build
+        curl -LsSf https://hf.co/cli/install.sh | bash
+        hf --help
+        cd vulnerability-db && pip install -U ".[dev]"
+      env:
+        HF_TOKEN: ${{ env.HF_TOKEN }}
+
+    - name: Install dependencies (self-hosted)
+      if: inputs.self-hosted == 'true'
+      shell: bash
+      run: |
+        python3 -m pip config set global.break-system-packages true
+        curl -LsSf https://hf.co/cli/install.sh | bash
+        hf --help
+        cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
+      env:
+        HF_TOKEN: ${{ env.HF_TOKEN }}

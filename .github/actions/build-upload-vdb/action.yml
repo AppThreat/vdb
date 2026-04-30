@@ -1,0 +1,95 @@
+name: 'Build and Upload VDB'
+description: 'Build VDB database, compress, and upload to GHCR and HuggingFace'
+
+inputs:
+  xz-image-name:
+    description: 'ORAS image name for xz compressed artifacts'
+    required: true
+  zst-image-name:
+    description: 'ORAS image name for zstd compressed artifacts'
+    required: true
+  hf-path:
+    description: 'HuggingFace dataset upload path prefix'
+    required: true
+  vuln-list-path:
+    description: 'Path to the vuln-list directory'
+    required: false
+    default: 'vuln-list'
+  self-hosted:
+    description: 'Whether running on a self-hosted runner'
+    required: false
+    default: 'false'
+  os-exclude-dirs:
+    description: 'Directories to exclude from vuln-list before build'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Build and upload VDB
+      shell: bash
+      run: |
+        echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
+        mkdir vdb_data vdb_cache
+
+        VULN_DIR="${{ inputs.vuln-list-path }}"
+
+        # Exclude unnecessary dirs for OS builds
+        if [ -n "${{ inputs.os-exclude-dirs }}" ]; then
+          for dir in ${{ inputs.os-exclude-dirs }}; do
+            rm -rf "${VULN_DIR}/${dir}"
+          done
+        fi
+
+        ls ${VULN_DIR}/ ${VULN_DIR}/nvd/
+        zip -q -r vuln-list.zip ${VULN_DIR}/
+        mv vuln-list.zip vdb_cache/
+        rm -rf ${VULN_DIR}/
+
+        PYTHON_CMD="python"
+        if [ "${{ inputs.self-hosted }}" = "true" ]; then
+          PYTHON_CMD="python3"
+        fi
+
+        ${PYTHON_CMD} vulnerability-db/vdb/cli.py --cache-os
+        ls -lh vdb_data
+        ls -lh vdb_cache
+        cd vdb_data
+
+        tar -cvJf data.vdb6.tar.xz data.vdb6
+        tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
+
+        oras push ghcr.io/appthreat/${{ inputs.xz-image-name }}:v6.5.x \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+        oras tag ghcr.io/appthreat/${{ inputs.xz-image-name }}:v6.5.x v6
+
+        hf upload --quiet --repo-type dataset --delete ${{ inputs.hf-path }}/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz ${{ inputs.hf-path }}/data.vdb6.tar.xz
+        hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz ${{ inputs.hf-path }}/data.index.vdb6.tar.xz
+
+        zstd --ultra data.index.vdb6
+        zstd --ultra data.vdb6
+
+        oras push ghcr.io/appthreat/${{ inputs.zst-image-name }}:v6.5.x \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+        oras tag ghcr.io/appthreat/${{ inputs.zst-image-name }}:v6.5.x v6
+
+        hf upload --quiet --repo-type dataset --delete ${{ inputs.hf-path }}/*.zst AppThreat/vdb ./data.vdb6.zst ${{ inputs.hf-path }}/data.vdb6.zst
+        hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst ${{ inputs.hf-path }}/data.index.vdb6.zst
+        hf upload --quiet --repo-type dataset --delete ${{ inputs.hf-path }}/*.vdb6 AppThreat/vdb ./data.vdb6 ${{ inputs.hf-path }}/data.vdb6
+        hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 ${{ inputs.hf-path }}/data.index.vdb6
+        hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta ${{ inputs.hf-path }}/vdb.meta
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        PYTHONPATH: vulnerability-db
+        VDB_HOME: vdb_data
+        VDB_CACHE: vdb_cache
+        GITHUB_USERNAME: ${{ env.GITHUB_USERNAME }}
+        HF_TOKEN: ${{ env.HF_TOKEN }}
