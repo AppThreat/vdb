@@ -76,7 +76,12 @@ runs:
         ${{ inputs.python-executable }} -m pip install --upgrade pip
         ${{ inputs.python-executable }} -m pip install setuptools wheel twine build
         if [[ "${{ inputs.install-hf-cli }}" == "true" ]]; then
-          curl -LsSf https://hf.co/cli/install.sh | bash
+          hf_cli_bin_dir="${HF_CLI_BIN_DIR:-$HOME/.local/bin}"
+          curl -LsSf https://hf.co/cli/install.sh | HF_CLI_BIN_DIR="$hf_cli_bin_dir" bash
+          if [[ -n "${GITHUB_PATH:-}" ]]; then
+            printf '%s\n' "$hf_cli_bin_dir" >> "$GITHUB_PATH"
+          fi
+          export PATH="$hf_cli_bin_dir:$PATH"
           hf --help
         fi
         cd "${{ inputs.vulnerability-db-path }}"
