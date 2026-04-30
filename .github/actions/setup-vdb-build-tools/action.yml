@@ -1,0 +1,87 @@
+name: Setup VDB build tools
+description: Install shared tools and Python dependencies for VDB builds
+inputs:
+  setup-python:
+    description: Whether to install Python via setup-python
+    required: false
+    default: "true"
+  python-version:
+    description: Python version for setup-python
+    required: false
+    default: "3.12"
+  python-executable:
+    description: Python executable to use for pip and build commands
+    required: false
+    default: python
+  run-trim:
+    description: Whether to run disk cleanup script
+    required: false
+    default: "true"
+  install-nydus:
+    description: Whether to install nydus-image binaries
+    required: false
+    default: "false"
+  install-hf-cli:
+    description: Whether to install huggingface CLI
+    required: false
+    default: "false"
+  enable-break-system-packages:
+    description: Configure pip to allow system package updates
+    required: false
+    default: "false"
+  vulnerability-db-path:
+    description: Path where AppThreat/vulnerability-db is checked out
+    required: false
+    default: vulnerability-db
+  vulnerability-db-extras:
+    description: Extras string for vulnerability-db installation
+    required: false
+    default: ".[dev]"
+  dependency-install-extra-args:
+    description: Extra args passed to pip when installing vulnerability-db
+    required: false
+    default: ""
+  upgrade-vulnerability-db:
+    description: Upgrade vulnerability-db dependencies when installing
+    required: false
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
+    - if: ${{ inputs.setup-python == 'true' }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ inputs.python-version }}
+    - if: ${{ inputs.run-trim == 'true' }}
+      shell: bash
+      run: |
+        chmod +x contrib/free_disk_space.sh
+        ./contrib/free_disk_space.sh
+    - if: ${{ inputs.install-nydus == 'true' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -LO https://github.com/dragonflyoss/nydus/releases/download/v2.2.4/nydus-static-v2.2.4-linux-amd64.tgz
+        tar -xvf nydus-static-v2.2.4-linux-amd64.tgz
+        chmod +x nydus-static/*
+        mv nydus-static/* /usr/local/bin/
+        rm -rf nydus-static-v2.2.4-linux-amd64.tgz nydus-static
+    - shell: bash
+      run: |
+        set -euo pipefail
+        if [[ "${{ inputs.enable-break-system-packages }}" == "true" ]]; then
+          ${{ inputs.python-executable }} -m pip config set global.break-system-packages true
+        fi
+        ${{ inputs.python-executable }} -m pip install --upgrade pip
+        ${{ inputs.python-executable }} -m pip install setuptools wheel twine build
+        if [[ "${{ inputs.install-hf-cli }}" == "true" ]]; then
+          curl -LsSf https://hf.co/cli/install.sh | bash
+          hf --help
+        fi
+        cd "${{ inputs.vulnerability-db-path }}"
+        if [[ "${{ inputs.upgrade-vulnerability-db }}" == "true" ]]; then
+          ${{ inputs.python-executable }} -m pip install -U "${{ inputs.vulnerability-db-extras }}" ${{ inputs.dependency-install-extra-args }}
+        else
+          ${{ inputs.python-executable }} -m pip install "${{ inputs.vulnerability-db-extras }}" ${{ inputs.dependency-install-extra-args }}
+        fi

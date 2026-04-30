@@ -1,0 +1,143 @@
+name: Build and upload VDB v5
+description: Build VDB v5 artifacts and publish to GHCR
+inputs:
+  vuln-list-path:
+    description: Path of the checked out vuln-list repository
+    required: false
+    default: vuln-list
+  image-repo:
+    description: Container repository for main VDB artifacts
+    required: true
+  image-gz-repo:
+    description: Container repository for gz VDB artifacts
+    required: true
+  image-xz-repo:
+    description: Container repository for xz VDB artifacts
+    required: true
+  image-rafs-repo:
+    description: Container repository for RAFS artifacts
+    required: false
+    default: ""
+  version-tag:
+    description: Version tag for all published artifacts
+    required: false
+    default: v5
+  rafs-blob-id:
+    description: Blob id used for nydus RAFS generation
+    required: true
+  nvd-start-year:
+    description: Value for NVD_START_YEAR environment variable
+    required: true
+  github-page-count:
+    description: Value for GITHUB_PAGE_COUNT environment variable
+    required: true
+  python-executable:
+    description: Python executable used to build VDB
+    required: false
+    default: python
+  cleanup-os-directories:
+    description: Remove OS-specific directories from vuln-list before packaging
+    required: false
+    default: "true"
+  clean-workspace:
+    description: Remove build output directories before creating them
+    required: false
+    default: "false"
+  use-config-annotation:
+    description: Use config and annotation files for main and RAFS pushes
+    required: false
+    default: "false"
+  config-file:
+    description: ORAS config file path used when use-config-annotation is true
+    required: false
+    default: ../config.json
+  annotation-file:
+    description: ORAS annotation file path used when use-config-annotation is true
+    required: false
+    default: ../annotations.json
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VDB_HOME: vdb_data
+        VDB_CACHE: vdb_cache
+        NVD_START_YEAR: ${{ inputs.nvd-start-year }}
+        GITHUB_PAGE_COUNT: ${{ inputs.github-page-count }}
+      run: |
+        set -euo pipefail
+
+        if [[ "${{ inputs.clean-workspace }}" == "true" ]]; then
+          rm -rf vdb_data vdb_cache rafs_out
+        fi
+
+        mkdir vdb_data vdb_cache rafs_out
+
+        if [[ "${{ inputs.cleanup-os-directories }}" == "true" ]]; then
+          rm -rf "./${{ inputs.vuln-list-path }}/kevc" "./${{ inputs.vuln-list-path }}/mariner" "./${{ inputs.vuln-list-path }}/cvrf/suse/suse"
+        fi
+
+        zip -q -r vuln-list.zip "./${{ inputs.vuln-list-path }}/"
+        mv vuln-list.zip vdb_cache/
+        rm -rf "./${{ inputs.vuln-list-path }}/"
+
+        ${{ inputs.python-executable }} vulnerability-db/vdb/cli.py --cache-os
+
+        ls -lh vdb_data
+        ls -lh vdb_cache
+
+        cd vdb_data
+
+        tar -cvzf data.vdb5.tar.gz data.vdb5
+        tar -cvzf data.index.vdb5.tar.gz data.index.vdb5
+        tar -cvJf data.vdb5.tar.xz data.vdb5
+        tar -cvJf data.index.vdb5.tar.xz data.index.vdb5
+
+        echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+        if [[ "${{ inputs.use-config-annotation }}" == "true" ]]; then
+          oras push "ghcr.io/${{ inputs.image-repo }}:${{ inputs.version-tag }}" \
+            --config "${{ inputs.config-file }}":application/vnd.oras.config.v1+json \
+            --annotation-file "${{ inputs.annotation-file }}" \
+            ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
+        else
+          oras push "ghcr.io/${{ inputs.image-repo }}:${{ inputs.version-tag }}" \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./data.vdb5:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb5:application/vnd.appthreat.vdb.layer.v1+tar
+        fi
+
+        oras push "ghcr.io/${{ inputs.image-gz-repo }}:${{ inputs.version-tag }}" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb5.tar.gz:application/vnd.appthreat.vdb.layer.v1+tar
+
+        oras push "ghcr.io/${{ inputs.image-xz-repo }}:${{ inputs.version-tag }}" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./data.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb5.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+
+        cd ..
+
+        nydus-image create -t dir-rafs --blob-id "${{ inputs.rafs-blob-id }}" --blob rafs_out/data.rafs --bootstrap rafs_out/meta.rafs vdb_data --repeatable
+
+        cd rafs_out
+
+        rafs_repo="${{ inputs.image-rafs-repo }}"
+        if [[ -z "$rafs_repo" ]]; then
+          rafs_repo="${{ inputs.image-repo }}"
+        fi
+
+        if [[ "${{ inputs.use-config-annotation }}" == "true" ]]; then
+          oras push "ghcr.io/${rafs_repo}:${{ inputs.version-tag }}-rafs" \
+            --config "${{ inputs.config-file }}":application/vnd.oras.config.v1+json \
+            --annotation-file "${{ inputs.annotation-file }}" \
+            ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
+            ./meta.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar
+        else
+          oras push "ghcr.io/${rafs_repo}:${{ inputs.version-tag }}-rafs" \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./data.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar \
+            ./meta.rafs:application/vnd.appthreat.vdb-rafs.layer.v1+tar
+        fi
