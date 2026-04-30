@@ -44,7 +44,7 @@ inputs:
   upgrade-vulnerability-db:
     description: Upgrade vulnerability-db dependencies when installing
     required: false
-    default: "true"
+    default: "false"
 runs:
   using: composite
   steps:
