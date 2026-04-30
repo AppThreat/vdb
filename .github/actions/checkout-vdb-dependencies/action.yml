@@ -1,0 +1,48 @@
+name: Checkout VDB dependencies
+description: Checkout vulnerability-db and vuln-list repositories
+inputs:
+  checkout-vulnerability-db:
+    description: Whether to checkout AppThreat/vulnerability-db
+    required: false
+    default: "true"
+  vulnerability-db-ref:
+    description: Ref to checkout for AppThreat/vulnerability-db
+    required: false
+    default: master
+  vuln-list-path:
+    description: Destination path for AppThreat/vuln-list
+    required: false
+    default: vuln-list
+  vuln-list-fetch-depth:
+    description: Fetch depth for AppThreat/vuln-list
+    required: false
+    default: "1"
+  vuln-list-sparse-checkout:
+    description: Optional sparse checkout list for AppThreat/vuln-list
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - if: ${{ inputs.checkout-vulnerability-db == 'true' }}
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: AppThreat/vulnerability-db
+        path: vulnerability-db
+        ref: ${{ inputs.vulnerability-db-ref }}
+        persist-credentials: false
+    - if: ${{ inputs.vuln-list-sparse-checkout != '' }}
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: AppThreat/vuln-list
+        path: ${{ inputs.vuln-list-path }}
+        fetch-depth: ${{ inputs.vuln-list-fetch-depth }}
+        sparse-checkout: ${{ inputs.vuln-list-sparse-checkout }}
+        persist-credentials: false
+    - if: ${{ inputs.vuln-list-sparse-checkout == '' }}
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: AppThreat/vuln-list
+        path: ${{ inputs.vuln-list-path }}
+        fetch-depth: ${{ inputs.vuln-list-fetch-depth }}
+        persist-credentials: false

@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: "20 */12 * * *"
   workflow_dispatch:
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: appthreat/vdb
@@ -15,105 +16,37 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          repository: AppThreat/vulnerability-db
-          path: vulnerability-db
-          ref: "master"
-          persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          repository: AppThreat/vuln-list
-          path: vuln-list
-          fetch-depth: "1"
-          sparse-checkout: |
+          vulnerability-db-ref: master
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
             nvd/2024
             nvd/2025
             nvd/2026
-          persist-credentials: false
-      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+
+      - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          python-version: "3.12"
-      - name: Trim CI agent
-        run: |
-          chmod +x contrib/free_disk_space.sh
-          ./contrib/free_disk_space.sh
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine build
-          curl -LsSf https://hf.co/cli/install.sh | bash
-          hf --help
-          cd vulnerability-db && pip install -U ".[dev]"
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          install-hf-cli: "true"
+
       - name: Build and upload app db - 2024
-        run: |
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          mkdir vdb_data vdb_cache
-          ls ./vuln-list/ ./vuln-list/nvd/
-          zip -q -r vuln-list.zip ./vuln-list/
-          mv vuln-list.zip vdb_cache/
-          rm -rf ./vuln-list/
-          python vulnerability-db/vdb/cli.py --cache-os
-          ls -lh vdb_data
-          ls -lh vdb_cache
-          cd vdb_data
-          tar -cvJf data.vdb6.tar.xz data.vdb6
-          tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbxz-app-2y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          oras tag ghcr.io/appthreat/vdbxz-app-2y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-2y/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz app-2y/data.vdb6.tar.xz
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-2y/data.index.vdb6.tar.xz
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
-          oras push ghcr.io/appthreat/vdbzst-app-2y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras tag ghcr.io/appthreat/vdbzst-app-2y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-2y/*.zst AppThreat/vdb ./data.vdb6.zst app-2y/data.vdb6.zst
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-2y/data.index.vdb6.zst
-          hf upload --quiet --repo-type dataset --delete app-2y/*.vdb6 AppThreat/vdb ./data.vdb6 app-2y/data.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-2y/data.index.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta app-2y/vdb.meta
-          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          # oras push codeberg.org/appthreat/vdbzst-app-2y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          # oras push codeberg.org/appthreat/vdbxz-app-2y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app-2y
+          image-zst-repo: appthreat/vdbzst-app-2y
+          hf-path-prefix: app-2y
+          nvd-start-year: "2024"
+          github-page-count: "10"
+          app-only-mode: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
-          PYTHONPATH: vulnerability-db
-          VDB_HOME: vdb_data
-          VDB_CACHE: vdb_cache
-          GITHUB_PAGE_COUNT: 10
-          NVD_START_YEAR: 2024
           GITHUB_USERNAME: ${{ github.actor }}
-          CODEBERG_USERNAME: appthreat
-          VDB_IGNORE_OS: true
-          VDB_METADATA_APP_ONLY: true
-          VDB_IGNORE_ALMALINUX: true
-          VDB_IGNORE_ALPINE: true
-          VDB_IGNORE_DEBIAN: true
-          VDB_IGNORE_ROCKYLINUX: true
+          PYTHONPATH: vulnerability-db
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
@@ -123,21 +56,15 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          repository: AppThreat/vulnerability-db
-          path: vulnerability-db
-          ref: "master"
-          persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          repository: AppThreat/vuln-list
-          path: vuln-list
-          fetch-depth: "1"
-          sparse-checkout: |
+          vulnerability-db-ref: master
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
             nvd/2020
             nvd/2021
             nvd/2022
@@ -145,87 +72,25 @@ jobs:
             nvd/2024
             nvd/2025
             nvd/2026
-          persist-credentials: false
-      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+
+      - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          python-version: "3.12"
-      - name: Trim CI agent
-        run: |
-          chmod +x contrib/free_disk_space.sh
-          ./contrib/free_disk_space.sh
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine build
-          curl -LsSf https://hf.co/cli/install.sh | bash
-          hf --help
-          cd vulnerability-db && pip install -U ".[dev]"
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          install-hf-cli: "true"
+
       - name: Build and upload app db - 2020
-        run: |
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          mkdir vdb_data vdb_cache
-          ls ./vuln-list/ ./vuln-list/nvd/
-          zip -q -r vuln-list.zip ./vuln-list/
-          mv vuln-list.zip vdb_cache/
-          rm -rf ./vuln-list/
-          python vulnerability-db/vdb/cli.py --cache-os
-          ls -lh vdb_data
-          ls -lh vdb_cache
-          cd vdb_data
-          tar -cvJf data.vdb6.tar.xz data.vdb6
-          tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbxz-app:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          oras tag ghcr.io/appthreat/vdbxz-app:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz app/data.vdb6.tar.xz
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app/data.index.vdb6.tar.xz
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
-          oras push ghcr.io/appthreat/vdbzst-app:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras tag ghcr.io/appthreat/vdbzst-app:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app/*.zst AppThreat/vdb ./data.vdb6.zst app/data.vdb6.zst
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app/data.index.vdb6.zst
-          hf upload --quiet --repo-type dataset --delete app-2y/*.vdb6 AppThreat/vdb ./data.vdb6 app/data.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app/data.index.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta app/vdb.meta
-          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          # oras push codeberg.org/appthreat/vdbzst-app:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          # oras push codeberg.org/appthreat/vdbxz-app:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app
+          image-zst-repo: appthreat/vdbzst-app
+          hf-path-prefix: app
+          nvd-start-year: "2020"
+          github-page-count: "30"
+          app-only-mode: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
-          PYTHONPATH: vulnerability-db
-          VDB_HOME: vdb_data
-          VDB_CACHE: vdb_cache
-          GITHUB_PAGE_COUNT: 30
-          NVD_START_YEAR: 2020
           GITHUB_USERNAME: ${{ github.actor }}
-          CODEBERG_USERNAME: appthreat
-          VDB_METADATA_APP_ONLY: true
-          VDB_IGNORE_OS: true
-          VDB_IGNORE_ALMALINUX: true
-          VDB_IGNORE_ALPINE: true
-          VDB_IGNORE_DEBIAN: true
-          VDB_IGNORE_ROCKYLINUX: true
+          PYTHONPATH: vulnerability-db
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
@@ -235,24 +100,18 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          repository: AppThreat/vulnerability-db
-          path: vulnerability-db
-          ref: "master"
-          persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-        with:
-          repository: AppThreat/vuln-list
-          path: vuln-list
-          fetch-depth: "1"
-          sparse-checkout: |
+          vulnerability-db-ref: master
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
             nvd/2016
             nvd/2017
-            nvd/2020
+            nvd/2018
             nvd/2019
             nvd/2020
             nvd/2021
@@ -261,87 +120,25 @@ jobs:
             nvd/2024
             nvd/2025
             nvd/2026
-          persist-credentials: false
-      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+
+      - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          python-version: "3.12"
-      - name: Trim CI agent
-        run: |
-          chmod +x contrib/free_disk_space.sh
-          ./contrib/free_disk_space.sh
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install setuptools wheel twine build
-          curl -LsSf https://hf.co/cli/install.sh | bash
-          hf --help
-          cd vulnerability-db && pip install -U ".[dev]"
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      - name: Build and upload app db - 2020
-        run: |
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          mkdir vdb_data vdb_cache
-          ls ./vuln-list/ ./vuln-list/nvd/
-          zip -q -r vuln-list.zip ./vuln-list/
-          mv vuln-list.zip vdb_cache/
-          rm -rf ./vuln-list/
-          python vulnerability-db/vdb/cli.py --cache-os
-          ls -lh vdb_data
-          ls -lh vdb_cache
-          cd vdb_data
-          tar -cvJf data.vdb6.tar.xz data.vdb6
-          tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbxz-app-10y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          oras tag ghcr.io/appthreat/vdbxz-app-10y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-10y/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz app-10y/data.vdb6.tar.xz
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-10y/data.index.vdb6.tar.xz
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
-          oras push ghcr.io/appthreat/vdbzst-app-10y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras tag ghcr.io/appthreat/vdbzst-app-10y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-10y/*.zst AppThreat/vdb ./data.vdb6.zst app-10y/data.vdb6.zst
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-10y/data.index.vdb6.zst
-          hf upload --quiet --repo-type dataset --delete app-10y/*.vdb6 AppThreat/vdb ./data.vdb6 app-10y/data.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-10y/data.index.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta app-10y/vdb.meta
-          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          # oras push codeberg.org/appthreat/vdbzst-app-10y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          # oras push codeberg.org/appthreat/vdbxz-app-10y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          install-hf-cli: "true"
+
+      - name: Build and upload app db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app-10y
+          image-zst-repo: appthreat/vdbzst-app-10y
+          hf-path-prefix: app-10y
+          nvd-start-year: "2016"
+          github-page-count: "30"
+          app-only-mode: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
-          PYTHONPATH: vulnerability-db
-          VDB_HOME: vdb_data
-          VDB_CACHE: vdb_cache
-          GITHUB_PAGE_COUNT: 30
-          NVD_START_YEAR: 2020
           GITHUB_USERNAME: ${{ github.actor }}
-          CODEBERG_USERNAME: appthreat
-          VDB_METADATA_APP_ONLY: true
-          VDB_IGNORE_OS: true
-          VDB_IGNORE_ALMALINUX: true
-          VDB_IGNORE_ALPINE: true
-          VDB_IGNORE_DEBIAN: true
-          VDB_IGNORE_ROCKYLINUX: true
+          PYTHONPATH: vulnerability-db
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
 
@@ -351,149 +148,58 @@ jobs:
       contents: write
       packages: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          repository: AppThreat/vulnerability-db
-          path: vulnerability-db
-          ref: "master"
-          persist-credentials: false
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+          vulnerability-db-ref: master
+          vuln-list-path: vuln-list
+
+      - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          repository: AppThreat/vuln-list
-          path: vuln-list
-          fetch-depth: "1"
-          persist-credentials: false
-      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3  # v2.0.0
-      - name: Install dependencies
-        run: |
-          python3 -m pip config set global.break-system-packages true
-          curl -LsSf https://hf.co/cli/install.sh | bash
-          hf --help
-          cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          setup-python: "false"
+          python-executable: python3
+          run-trim: "false"
+          install-hf-cli: "true"
+          enable-break-system-packages: "true"
+          dependency-install-extra-args: --no-warn-script-location
+
       - name: Build and upload db - 2020
-        run: |
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          mkdir vdb_data vdb_cache
-          rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
-          zip -q -r vuln-list.zip ./vuln-list/
-          mv vuln-list.zip vdb_cache/
-          rm -rf ./vuln-list/
-          python3 vulnerability-db/vdb/cli.py --cache-os
-          ls -lh vdb_data
-          ls -lh vdb_cache
-          cd vdb_data
-          tar -cvJf data.vdb6.tar.xz data.vdb6
-          tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbxz:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          oras tag ghcr.io/appthreat/vdbxz:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-os/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz app-os/data.vdb6.tar.xz
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-os/data.index.vdb6.tar.xz
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
-          oras push ghcr.io/appthreat/vdbzst:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras tag ghcr.io/appthreat/vdbzst:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-os/*.zst AppThreat/vdb ./data.vdb6.zst app-os/data.vdb6.zst
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-os/data.index.vdb6.zst
-          hf upload --quiet --repo-type dataset --delete app-os/*.vdb6 AppThreat/vdb ./data.vdb6 app-os/data.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os/data.index.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta app-os/vdb.meta
-          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          # oras push codeberg.org/appthreat/vdbzst:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          # oras push codeberg.org/appthreat/vdbxz:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
-          PYTHONPATH: vulnerability-db
-          VDB_HOME: vdb_data
-          VDB_CACHE: vdb_cache
-          GITHUB_PAGE_COUNT: 10
-          NVD_START_YEAR: 2020
-          GITHUB_USERNAME: ${{ github.actor }}
-          CODEBERG_USERNAME: appthreat
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        uses: ./.github/actions/build-and-upload-vdb6
         with:
-          repository: AppThreat/vuln-list
-          path: vuln-list2
-          fetch-depth: "1"
-          persist-credentials: false
-      - name: Build and upload db - 2016
-        run: |
-          echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-          cd $GITHUB_WORKSPACE
-          rm -rf vdb_data vdb_cache
-          mkdir vdb_data vdb_cache
-          rm -rf ./vuln-list/kevc ./vuln-list/mariner ./vuln-list/cvrf/suse/suse
-          zip -q -r vuln-list.zip ./vuln-list2/
-          mv vuln-list.zip vdb_cache/
-          rm -rf ./vuln-list2/
-          python3 vulnerability-db/vdb/cli.py --cache-os
-          ls -lh vdb_data
-          ls -lh vdb_cache
-          cd vdb_data
-          tar -cvJf data.vdb6.tar.xz data.vdb6
-          tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
-          oras push ghcr.io/appthreat/vdbxz-10y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
-          oras tag ghcr.io/appthreat/vdbxz-10y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-os-10y/*.tar.xz AppThreat/vdb ./data.vdb6.tar.xz app-os-10y/data.vdb6.tar.xz
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.tar.xz app-os-10y/data.index.vdb6.tar.xz
-          zstd --ultra data.index.vdb6
-          zstd --ultra data.vdb6
-          oras push ghcr.io/appthreat/vdbzst-10y:v6.5.x \
-            --artifact-type application/vnd.oras.config.v1+json \
-            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-            ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          oras tag ghcr.io/appthreat/vdbzst-10y:v6.5.x v6
-          hf upload --quiet --repo-type dataset --delete app-os-10y/*.zst AppThreat/vdb ./data.vdb6.zst app-os-10y/data.vdb6.zst
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6.zst app-os-10y/data.index.vdb6.zst
-          hf upload --quiet --repo-type dataset --delete app-os-10y/*.vdb6 AppThreat/vdb ./data.vdb6 app-os-10y/data.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 app-os-10y/data.index.vdb6
-          hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta app-os-10y/vdb.meta
-          # echo $CODEBERG_TOKEN | oras login codeberg.org -u $CODEBERG_USERNAME --password-stdin
-          # oras push codeberg.org/appthreat/vdbzst-10y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          #   ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
-          # oras push codeberg.org/appthreat/vdbxz-10y:v6.5.x \
-          #   --artifact-type application/vnd.oras.config.v1+json \
-          #   ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          #   ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          #   ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz
+          image-zst-repo: appthreat/vdbzst
+          hf-path-prefix: app-os
+          nvd-start-year: "2020"
+          github-page-count: "10"
+          python-executable: python3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CODEBERG_TOKEN: ${{ secrets.CODEBERG_DEPLOY }}
-          PYTHONPATH: vulnerability-db
-          VDB_HOME: vdb_data
-          VDB_CACHE: vdb_cache
-          GITHUB_PAGE_COUNT: 20
-          NVD_START_YEAR: 2016
           GITHUB_USERNAME: ${{ github.actor }}
-          CODEBERG_USERNAME: appthreat
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list2
+
+      - name: Build and upload db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list2
+          image-xz-repo: appthreat/vdbxz-10y
+          image-zst-repo: appthreat/vdbzst-10y
+          hf-path-prefix: app-os-10y
+          nvd-start-year: "2016"
+          github-page-count: "20"
+          python-executable: python3
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
           HF_TOKEN: ${{ secrets.HF_TOKEN }}

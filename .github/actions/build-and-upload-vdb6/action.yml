@@ -1,0 +1,128 @@
+name: Build and upload VDB v6
+description: Build VDB v6 artifacts and publish to GHCR and Hugging Face
+inputs:
+  vuln-list-path:
+    description: Path of the checked out vuln-list repository
+    required: false
+    default: vuln-list
+  image-xz-repo:
+    description: Container repository for xz VDB artifacts
+    required: true
+  image-zst-repo:
+    description: Container repository for zst VDB artifacts
+    required: true
+  version-tag:
+    description: Version tag for published artifacts
+    required: false
+    default: v6.5.x
+  stable-tag:
+    description: Optional additional tag to apply after push
+    required: false
+    default: v6
+  hf-repo:
+    description: Hugging Face dataset repository
+    required: false
+    default: AppThreat/vdb
+  hf-path-prefix:
+    description: Hugging Face destination prefix for uploaded files
+    required: true
+  nvd-start-year:
+    description: Value for NVD_START_YEAR environment variable
+    required: true
+  github-page-count:
+    description: Value for GITHUB_PAGE_COUNT environment variable
+    required: true
+  python-executable:
+    description: Python executable used to build VDB
+    required: false
+    default: python
+  cleanup-os-directories:
+    description: Remove OS-specific directories from vuln-list before packaging
+    required: false
+    default: "true"
+  clean-workspace:
+    description: Remove build output directories before creating them
+    required: false
+    default: "false"
+  app-only-mode:
+    description: Enable application-only environment flags
+    required: false
+    default: "false"
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+
+        export VDB_HOME=vdb_data
+        export VDB_CACHE=vdb_cache
+        export NVD_START_YEAR="${{ inputs.nvd-start-year }}"
+        export GITHUB_PAGE_COUNT="${{ inputs.github-page-count }}"
+
+        if [[ "${{ inputs.app-only-mode }}" == "true" ]]; then
+          export VDB_METADATA_APP_ONLY=true
+          export VDB_IGNORE_OS=true
+          export VDB_IGNORE_ALMALINUX=true
+          export VDB_IGNORE_ALPINE=true
+          export VDB_IGNORE_DEBIAN=true
+          export VDB_IGNORE_ROCKYLINUX=true
+        fi
+
+        if [[ "${{ inputs.clean-workspace }}" == "true" ]]; then
+          rm -rf vdb_data vdb_cache
+        fi
+
+        mkdir vdb_data vdb_cache
+
+        if [[ "${{ inputs.cleanup-os-directories }}" == "true" ]]; then
+          rm -rf "./${{ inputs.vuln-list-path }}/kevc" "./${{ inputs.vuln-list-path }}/mariner" "./${{ inputs.vuln-list-path }}/cvrf/suse/suse"
+        fi
+
+        zip -q -r vuln-list.zip "./${{ inputs.vuln-list-path }}/"
+        mv vuln-list.zip vdb_cache/
+        rm -rf "./${{ inputs.vuln-list-path }}/"
+
+        ${{ inputs.python-executable }} vulnerability-db/vdb/cli.py --cache-os
+
+        ls -lh vdb_data
+        ls -lh vdb_cache
+
+        cd vdb_data
+
+        tar -cvJf data.vdb6.tar.xz data.vdb6
+        tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
+
+        echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+        oras push "ghcr.io/${{ inputs.image-xz-repo }}:${{ inputs.version-tag }}" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+
+        if [[ -n "${{ inputs.stable-tag }}" ]]; then
+          oras tag "ghcr.io/${{ inputs.image-xz-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
+        fi
+
+        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
+
+        zstd --ultra data.index.vdb6
+        zstd --ultra data.vdb6
+
+        oras push "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+
+        if [[ -n "${{ inputs.stable-tag }}" ]]; then
+          oras tag "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
+        fi
+
+        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
+        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
+        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
