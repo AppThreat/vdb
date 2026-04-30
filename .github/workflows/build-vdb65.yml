@@ -367,7 +367,7 @@ jobs:
       - name: Install dependencies
         run: |
           python3 -m pip config set global.break-system-packages true
-          python3 -m pip install -U "huggingface_hub[cli]"
+          python3 -m pip install -U huggingface_hub
           cd vulnerability-db && python3 -m pip install -U ".[dev]" --no-warn-script-location
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
