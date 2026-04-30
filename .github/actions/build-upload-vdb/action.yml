@@ -11,6 +11,17 @@ inputs:
   hf-path:
     description: 'HuggingFace dataset upload path prefix'
     required: true
+  hf-token:
+    description: 'HuggingFace token for uploads'
+    required: true
+  github-token:
+    description: 'GitHub token for ORAS login'
+    required: false
+    default: ${{ github.token }}
+  github-username:
+    description: 'GitHub username for ORAS login'
+    required: false
+    default: ${{ github.actor }}
   vuln-list-path:
     description: 'Path to the vuln-list directory'
     required: false
@@ -32,7 +43,7 @@ runs:
       shell: bash
       run: |
         echo $GITHUB_TOKEN | oras login ghcr.io -u $GITHUB_USERNAME --password-stdin
-        mkdir vdb_data vdb_cache
+        mkdir -p vdb_data vdb_cache
 
         VULN_DIR="${{ inputs.vuln-list-path }}"
 
@@ -87,9 +98,9 @@ runs:
         hf upload --quiet --repo-type dataset AppThreat/vdb ./data.index.vdb6 ${{ inputs.hf-path }}/data.index.vdb6
         hf upload --quiet --repo-type dataset AppThreat/vdb ./vdb.meta ${{ inputs.hf-path }}/vdb.meta
       env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
         PYTHONPATH: vulnerability-db
         VDB_HOME: vdb_data
         VDB_CACHE: vdb_cache
-        GITHUB_USERNAME: ${{ env.GITHUB_USERNAME }}
-        HF_TOKEN: ${{ env.HF_TOKEN }}
+        GITHUB_USERNAME: ${{ inputs.github-username }}
+        HF_TOKEN: ${{ inputs.hf-token }}

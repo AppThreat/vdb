@@ -24,6 +24,9 @@ jobs:
       VDB_IGNORE_ALPINE: true
       VDB_IGNORE_DEBIAN: true
       VDB_IGNORE_ROCKYLINUX: true
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      GITHUB_USERNAME: ${{ github.actor }}
     steps:
       - uses: ./.github/actions/setup-vdb
         with:
@@ -33,6 +36,9 @@ jobs:
           xz-image-name: vdbxz-app-2y
           zst-image-name: vdbzst-app-2y
           hf-path: app-2y
+          hf-token: ${{ secrets.HF_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-username: ${{ github.actor }}
         continue-on-error: true
 
   app_builder:
@@ -49,6 +55,9 @@ jobs:
       VDB_IGNORE_ALPINE: true
       VDB_IGNORE_DEBIAN: true
       VDB_IGNORE_ROCKYLINUX: true
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      GITHUB_USERNAME: ${{ github.actor }}
     steps:
       - uses: ./.github/actions/setup-vdb
         with:
@@ -58,6 +67,9 @@ jobs:
           xz-image-name: vdbxz-app
           zst-image-name: vdbzst-app
           hf-path: app
+          hf-token: ${{ secrets.HF_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-username: ${{ github.actor }}
         continue-on-error: true
 
   app_10y_builder:
@@ -74,6 +86,9 @@ jobs:
       VDB_IGNORE_ALPINE: true
       VDB_IGNORE_DEBIAN: true
       VDB_IGNORE_ROCKYLINUX: true
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      GITHUB_USERNAME: ${{ github.actor }}
     steps:
       - uses: ./.github/actions/setup-vdb
         with:
@@ -83,6 +98,9 @@ jobs:
           xz-image-name: vdbxz-app-10y
           zst-image-name: vdbzst-app-10y
           hf-path: app-10y
+          hf-token: ${{ secrets.HF_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-username: ${{ github.actor }}
         continue-on-error: true
 
   os_builder:
@@ -100,6 +118,9 @@ jobs:
           xz-image-name: vdbxz
           zst-image-name: vdbzst
           hf-path: app-os
+          hf-token: ${{ secrets.HF_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-username: ${{ github.actor }}
           self-hosted: 'true'
           os-exclude-dirs: 'kevc mariner cvrf/suse/suse'
         env:

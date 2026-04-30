@@ -3,8 +3,9 @@ description: 'Checkout repos, install tools and dependencies for VDB build'
 
 inputs:
   nvd-years:
-    description: 'Comma-separated NVD years for sparse checkout (e.g. "2024,2025,2026")'
-    required: true
+    description: 'Newline-separated sparse-checkout patterns for NVD data (e.g. "nvd/2024\nnvd/2025\nnvd/2026")'
+    required: false
+    default: ''
   sparse-checkout:
     description: 'Whether to use sparse checkout for vuln-list'
     required: false
@@ -29,8 +30,13 @@ runs:
         ref: 'master'
         persist-credentials: false
 
+    - name: Validate nvd-years for sparse checkout
+      if: inputs.sparse-checkout == 'true' && inputs.nvd-years == ''
+      shell: bash
+      run: echo "::error::nvd-years input is required when sparse-checkout is enabled" && exit 1
+
     - name: Checkout vuln-list with sparse checkout
-      if: inputs.sparse-checkout == 'true'
+      if: inputs.sparse-checkout == 'true' && inputs.nvd-years != ''
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
         repository: AppThreat/vuln-list
