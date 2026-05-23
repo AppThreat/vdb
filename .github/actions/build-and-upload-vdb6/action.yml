@@ -111,6 +111,51 @@ runs:
         zstd --ultra data.index.vdb6
         zstd --ultra data.vdb6
 
+        case "${{ inputs.hf-path-prefix }}" in
+          app-2y)
+            SIZE_SCOPE="App Only"
+            SIZE_TIME_CONTEXT="2 Years (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Fast, lightweight scans for very modern applications."
+            ;;
+          app)
+            SIZE_SCOPE="App Only"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Standard application dependency scanning."
+            ;;
+          app-10y)
+            SIZE_SCOPE="App Only"
+            SIZE_TIME_CONTEXT="10 Years (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Deep auditing of legacy application software."
+            ;;
+          app-os)
+            SIZE_SCOPE="App + OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Standard container and OS-level package scanning."
+            ;;
+          app-os-10y)
+            SIZE_SCOPE="App + OS"
+            SIZE_TIME_CONTEXT="10 Years (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Deep auditing of legacy Linux containers/VMs."
+            ;;
+          *)
+            SIZE_SCOPE="${{ inputs.hf-path-prefix }}"
+            SIZE_TIME_CONTEXT="${{ inputs.nvd-start-year }}+"
+            SIZE_USE_CASE="Custom VDB artifact."
+            ;;
+        esac
+        SIZE_TAG="${{ inputs.stable-tag }}"
+        if [[ -z "$SIZE_TAG" ]]; then
+          SIZE_TAG="${{ inputs.version-tag }}"
+        fi
+        echo "Markdown size row for README.md:"
+        ${{ inputs.python-executable }} ../vulnerability-db/contrib/vdb_size_report.py \
+          --dir . \
+          --scope "$SIZE_SCOPE" \
+          --time-context "$SIZE_TIME_CONTEXT" \
+          --oras "ghcr.io/${{ inputs.image-xz-repo }}:$SIZE_TAG" \
+          --hf-path "${{ inputs.hf-path-prefix }}/" \
+          --use-case "$SIZE_USE_CASE"
+
         oras push "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" \
           --artifact-type application/vnd.oras.config.v1+json \
           ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
