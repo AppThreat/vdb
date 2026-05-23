@@ -52,6 +52,10 @@ inputs:
     description: Populate extended cve_metadata tables for metadata search APIs
     required: false
     default: "false"
+  upload-to-hf:
+    description: Upload built artifacts directly to Hugging Face
+    required: false
+    default: "true"
 runs:
   using: composite
   steps:
@@ -113,8 +117,12 @@ runs:
           oras tag "ghcr.io/${{ inputs.image-xz-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
         fi
 
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
-        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
+        if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
+        else
+          echo "Skipping direct Hugging Face upload for xz artifacts."
+        fi
 
         zstd --ultra data.index.vdb6
         zstd --ultra data.vdb6
@@ -180,14 +188,16 @@ runs:
         if [[ -z "$SIZE_TAG" ]]; then
           SIZE_TAG="${{ inputs.version-tag }}"
         fi
-        echo "Markdown size row for README.md:"
-        ${{ inputs.python-executable }} ../vulnerability-db/contrib/vdb_size_report.py \
-          --dir . \
-          --scope "$SIZE_SCOPE" \
-          --time-context "$SIZE_TIME_CONTEXT" \
-          --oras "ghcr.io/${{ inputs.image-xz-repo }}:$SIZE_TAG" \
-          --hf-path "${{ inputs.hf-path-prefix }}/" \
-          --use-case "$SIZE_USE_CASE"
+        SIZE_REPORT_SCRIPT="../vulnerability-db/contrib/vdb_size_report.py"
+        if [[ -f "$SIZE_REPORT_SCRIPT" ]]; then
+          ${{ inputs.python-executable }} "$SIZE_REPORT_SCRIPT" \
+            --dir . \
+            --scope "$SIZE_SCOPE" \
+            --time-context "$SIZE_TIME_CONTEXT" \
+            --oras "ghcr.io/${{ inputs.image-xz-repo }}:$SIZE_TAG" \
+            --hf-path "${{ inputs.hf-path-prefix }}/" \
+            --use-case "$SIZE_USE_CASE"
+        fi
 
         oras push "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" \
           --artifact-type application/vnd.oras.config.v1+json \
@@ -199,8 +209,12 @@ runs:
           oras tag "ghcr.io/${{ inputs.image-zst-repo }}:${{ inputs.version-tag }}" "${{ inputs.stable-tag }}"
         fi
 
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
-        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
-        hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
-        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
-        hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
+        if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
+        else
+          echo "Skipping direct Hugging Face upload for zst and raw artifacts."
+        fi

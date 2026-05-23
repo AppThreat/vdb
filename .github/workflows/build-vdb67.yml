@@ -30,7 +30,7 @@ jobs:
             nvd/2026
       - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          install-hf-cli: "true"
+          install-hf-cli: "false"
       - name: Build and upload app db - 2024
         uses: ./.github/actions/build-and-upload-vdb6
         with:
@@ -40,6 +40,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-2y
+          upload-to-hf: "false"
           nvd-start-year: "2024"
           github-page-count: "10"
           app-only-mode: "true"
@@ -47,7 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
@@ -66,6 +66,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-2y-extended
+          upload-to-hf: "false"
           nvd-start-year: "2024"
           github-page-count: "10"
           app-only-mode: "true"
@@ -75,7 +76,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
   app_builder:
     runs-on: ubuntu-latest
@@ -100,7 +100,7 @@ jobs:
             nvd/2026
       - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          install-hf-cli: "true"
+          install-hf-cli: "false"
       - name: Build and upload app db - 2020
         uses: ./.github/actions/build-and-upload-vdb6
         with:
@@ -110,6 +110,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app
+          upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "30"
           app-only-mode: "true"
@@ -117,7 +118,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
@@ -140,6 +140,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-extended
+          upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "30"
           app-only-mode: "true"
@@ -149,7 +150,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
   app_10y_builder:
     runs-on: ubuntu-latest
@@ -178,7 +178,7 @@ jobs:
             nvd/2026
       - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          install-hf-cli: "true"
+          install-hf-cli: "false"
       - name: Build and upload app db - 2016
         uses: ./.github/actions/build-and-upload-vdb6
         with:
@@ -188,6 +188,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-10y
+          upload-to-hf: "false"
           nvd-start-year: "2016"
           github-page-count: "30"
           app-only-mode: "true"
@@ -195,7 +196,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
@@ -222,6 +222,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-10y-extended
+          upload-to-hf: "false"
           nvd-start-year: "2016"
           github-page-count: "30"
           app-only-mode: "true"
@@ -231,7 +232,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         continue-on-error: true
   os_builder:
     runs-on: [self-hosted-ubuntu, linux]
@@ -251,7 +251,7 @@ jobs:
           setup-python: "false"
           python-executable: python3
           run-trim: "false"
-          install-hf-cli: "true"
+          install-hf-cli: "false"
           enable-break-system-packages: "true"
           dependency-install-extra-args: --no-warn-script-location
       - name: Build and upload db - 2020
@@ -263,6 +263,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os
+          upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "10"
           python-executable: python3
@@ -270,7 +271,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
           checkout-vulnerability-db: "false"
@@ -284,6 +284,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os-extended
+          upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "10"
           python-executable: python3
@@ -293,7 +294,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
           checkout-vulnerability-db: "false"
@@ -307,6 +307,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os-10y
+          upload-to-hf: "false"
           nvd-start-year: "2016"
           github-page-count: "20"
           python-executable: python3
@@ -315,7 +316,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
           checkout-vulnerability-db: "false"
@@ -329,6 +329,7 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os-10y-extended
+          upload-to-hf: "false"
           nvd-start-year: "2016"
           github-page-count: "20"
           python-executable: python3
@@ -338,4 +339,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}

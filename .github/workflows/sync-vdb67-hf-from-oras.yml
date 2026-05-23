@@ -1,0 +1,107 @@
+name: Sync vdb 6.7.x Hugging Face from ORAS
+"on":
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+env:
+  HF_XET_HIGH_PERFORMANCE: 1
+  HF_REPO: AppThreat/vdb
+  VDB_VERSION_TAG: v6.7.x
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image_xz_repo: appthreat/vdbxz-app-2y
+            image_zst_repo: appthreat/vdbzst-app-2y
+            hf_path_prefix: app-2y
+          - image_xz_repo: appthreat/vdbxz-app-2y-extended
+            image_zst_repo: appthreat/vdbzst-app-2y-extended
+            hf_path_prefix: app-2y-extended
+          - image_xz_repo: appthreat/vdbxz-app
+            image_zst_repo: appthreat/vdbzst-app
+            hf_path_prefix: app
+          - image_xz_repo: appthreat/vdbxz-app-extended
+            image_zst_repo: appthreat/vdbzst-app-extended
+            hf_path_prefix: app-extended
+          - image_xz_repo: appthreat/vdbxz-app-10y
+            image_zst_repo: appthreat/vdbzst-app-10y
+            hf_path_prefix: app-10y
+          - image_xz_repo: appthreat/vdbxz-app-10y-extended
+            image_zst_repo: appthreat/vdbzst-app-10y-extended
+            hf_path_prefix: app-10y-extended
+          - image_xz_repo: appthreat/vdbxz
+            image_zst_repo: appthreat/vdbzst
+            hf_path_prefix: app-os
+          - image_xz_repo: appthreat/vdbxz-extended
+            image_zst_repo: appthreat/vdbzst-extended
+            hf_path_prefix: app-os-extended
+          - image_xz_repo: appthreat/vdbxz-10y
+            image_zst_repo: appthreat/vdbzst-10y
+            hf_path_prefix: app-os-10y
+          - image_xz_repo: appthreat/vdbxz-10y-extended
+            image_zst_repo: appthreat/vdbzst-10y-extended
+            hf_path_prefix: app-os-10y-extended
+    steps:
+      - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
+      - name: Install Hugging Face CLI and zstd
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y zstd
+          hf_cli_bin_dir="${HF_CLI_BIN_DIR:-$HOME/.local/bin}"
+          curl -LsSf https://hf.co/cli/install.sh | HF_CLI_BIN_DIR="$hf_cli_bin_dir" bash
+          printf '%s\n' "$hf_cli_bin_dir" >> "$GITHUB_PATH"
+      - name: Pull ORAS artifacts and upload to Hugging Face
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          IMAGE_XZ_REPO: ${{ matrix.image_xz_repo }}
+          IMAGE_ZST_REPO: ${{ matrix.image_zst_repo }}
+          HF_PATH_PREFIX: ${{ matrix.hf_path_prefix }}
+        run: |
+          set -euo pipefail
+          echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+          work_dir="$(mktemp -d)"
+          trap 'rm -rf "$work_dir"' EXIT
+          xz_dir="$work_dir/xz"
+          zst_dir="$work_dir/zst"
+          hf_dir="$work_dir/hf"
+          mkdir -p "$xz_dir" "$zst_dir" "$hf_dir"
+          oras pull "ghcr.io/$IMAGE_XZ_REPO:$VDB_VERSION_TAG" -o "$xz_dir"
+          oras pull "ghcr.io/$IMAGE_ZST_REPO:$VDB_VERSION_TAG" -o "$zst_dir"
+          required_files=(
+            "$xz_dir/vdb.meta"
+            "$xz_dir/data.vdb6.tar.xz"
+            "$xz_dir/data.index.vdb6.tar.xz"
+            "$zst_dir/data.vdb6.zst"
+            "$zst_dir/data.index.vdb6.zst"
+          )
+          for file in "${required_files[@]}"; do
+            if [[ ! -f "$file" ]]; then
+              echo "Missing expected ORAS artifact: $file" >&2
+              exit 1
+            fi
+          done
+          cp "$xz_dir/vdb.meta" "$hf_dir/vdb.meta"
+          cp "$xz_dir/data.vdb6.tar.xz" "$hf_dir/data.vdb6.tar.xz"
+          cp "$xz_dir/data.index.vdb6.tar.xz" "$hf_dir/data.index.vdb6.tar.xz"
+          cp "$zst_dir/data.vdb6.zst" "$hf_dir/data.vdb6.zst"
+          cp "$zst_dir/data.index.vdb6.zst" "$hf_dir/data.index.vdb6.zst"
+          zstd -f -d "$hf_dir/data.vdb6.zst" -o "$hf_dir/data.vdb6"
+          zstd -f -d "$hf_dir/data.index.vdb6.zst" -o "$hf_dir/data.index.vdb6"
+          hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.tar.xz" "$HF_REPO" "$hf_dir/data.vdb6.tar.xz" "$HF_PATH_PREFIX/data.vdb6.tar.xz"
+          hf upload --quiet --repo-type dataset "$HF_REPO" "$hf_dir/data.index.vdb6.tar.xz" "$HF_PATH_PREFIX/data.index.vdb6.tar.xz"
+          hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.zst" "$HF_REPO" "$hf_dir/data.vdb6.zst" "$HF_PATH_PREFIX/data.vdb6.zst"
+          hf upload --quiet --repo-type dataset "$HF_REPO" "$hf_dir/data.index.vdb6.zst" "$HF_PATH_PREFIX/data.index.vdb6.zst"
+          hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.vdb6" "$HF_REPO" "$hf_dir/data.vdb6" "$HF_PATH_PREFIX/data.vdb6"
+          hf upload --quiet --repo-type dataset "$HF_REPO" "$hf_dir/data.index.vdb6" "$HF_PATH_PREFIX/data.index.vdb6"
+          hf upload --quiet --repo-type dataset "$HF_REPO" "$hf_dir/vdb.meta" "$HF_PATH_PREFIX/vdb.meta"
