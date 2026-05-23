@@ -1,0 +1,341 @@
+name: Build and Upload vdb 6.7.x
+on:
+  schedule:
+    - cron: "40 */12 * * *"
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: appthreat/vdb
+  HF_XET_HIGH_PERFORMANCE: 1
+  VDB_VERSION_TAG: v6.7.x
+  VDB_STABLE_TAG: ""
+  VDB_REF: master
+jobs:
+  app_2y_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "true"
+      - name: Build and upload app db - 2024
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app-2y
+          image-zst-repo: appthreat/vdbzst-app-2y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-2y
+          nvd-start-year: "2024"
+          github-page-count: "10"
+          app-only-mode: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-extended
+          vuln-list-sparse-checkout: |
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - name: Build and upload extended app db - 2024
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-extended
+          image-xz-repo: appthreat/vdbxz-app-2y-extended
+          image-zst-repo: appthreat/vdbzst-app-2y-extended
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-2y-extended
+          nvd-start-year: "2024"
+          github-page-count: "10"
+          app-only-mode: "true"
+          include-metadata: "true"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+  app_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "true"
+      - name: Build and upload app db - 2020
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app
+          image-zst-repo: appthreat/vdbzst-app
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app
+          nvd-start-year: "2020"
+          github-page-count: "30"
+          app-only-mode: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-extended
+          vuln-list-sparse-checkout: |
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - name: Build and upload extended app db - 2020
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-extended
+          image-xz-repo: appthreat/vdbxz-app-extended
+          image-zst-repo: appthreat/vdbzst-app-extended
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-extended
+          nvd-start-year: "2020"
+          github-page-count: "30"
+          app-only-mode: "true"
+          include-metadata: "true"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+  app_10y_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2016
+            nvd/2017
+            nvd/2018
+            nvd/2019
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "true"
+      - name: Build and upload app db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz-app-10y
+          image-zst-repo: appthreat/vdbzst-app-10y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-10y
+          nvd-start-year: "2016"
+          github-page-count: "30"
+          app-only-mode: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-extended
+          vuln-list-sparse-checkout: |
+            nvd/2016
+            nvd/2017
+            nvd/2018
+            nvd/2019
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - name: Build and upload extended app db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-extended
+          image-xz-repo: appthreat/vdbxz-app-10y-extended
+          image-zst-repo: appthreat/vdbzst-app-10y-extended
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-10y-extended
+          nvd-start-year: "2016"
+          github-page-count: "30"
+          app-only-mode: "true"
+          include-metadata: "true"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        continue-on-error: true
+  os_builder:
+    runs-on: [self-hosted-ubuntu, linux]
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          setup-python: "false"
+          python-executable: python3
+          run-trim: "false"
+          install-hf-cli: "true"
+          enable-break-system-packages: "true"
+          dependency-install-extra-args: --no-warn-script-location
+      - name: Build and upload db - 2020
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: appthreat/vdbxz
+          image-zst-repo: appthreat/vdbzst
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-os
+          nvd-start-year: "2020"
+          github-page-count: "10"
+          python-executable: python3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-extended
+      - name: Build and upload extended db - 2020
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-extended
+          image-xz-repo: appthreat/vdbxz-extended
+          image-zst-repo: appthreat/vdbzst-extended
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-os-extended
+          nvd-start-year: "2020"
+          github-page-count: "10"
+          python-executable: python3
+          include-metadata: "true"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-10y
+      - name: Build and upload db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-10y
+          image-xz-repo: appthreat/vdbxz-10y
+          image-zst-repo: appthreat/vdbzst-10y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-os-10y
+          nvd-start-year: "2016"
+          github-page-count: "20"
+          python-executable: python3
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          checkout-vulnerability-db: "false"
+          vuln-list-path: vuln-list-10y-extended
+      - name: Build and upload extended db - 2016
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list-10y-extended
+          image-xz-repo: appthreat/vdbxz-10y-extended
+          image-zst-repo: appthreat/vdbzst-10y-extended
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: app-os-10y-extended
+          nvd-start-year: "2016"
+          github-page-count: "20"
+          python-executable: python3
+          include-metadata: "true"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
