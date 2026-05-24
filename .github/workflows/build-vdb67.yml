@@ -236,6 +236,47 @@ jobs:
         continue-on-error: true
   os_builder:
     runs-on: [self-hosted-ubuntu, linux]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: app-os
+            vuln-list-path: vuln-list
+            image-xz-repo: appthreat/vdbxz
+            image-zst-repo: appthreat/vdbzst
+            hf-path-prefix: app-os
+            nvd-start-year: "2020"
+            github-page-count: "10"
+            include-metadata: "false"
+            clean-workspace: "false"
+          - name: app-os-extended
+            vuln-list-path: vuln-list
+            image-xz-repo: appthreat/vdbxz-extended
+            image-zst-repo: appthreat/vdbzst-extended
+            hf-path-prefix: app-os-extended
+            nvd-start-year: "2020"
+            github-page-count: "10"
+            include-metadata: "true"
+            clean-workspace: "true"
+          - name: app-os-10y
+            vuln-list-path: vuln-list
+            image-xz-repo: appthreat/vdbxz-10y
+            image-zst-repo: appthreat/vdbzst-10y
+            hf-path-prefix: app-os-10y
+            nvd-start-year: "2016"
+            github-page-count: "20"
+            include-metadata: "false"
+            clean-workspace: "true"
+          - name: app-os-10y-extended
+            vuln-list-path: vuln-list
+            image-xz-repo: appthreat/vdbxz-10y-extended
+            image-zst-repo: appthreat/vdbzst-10y-extended
+            hf-path-prefix: app-os-10y-extended
+            nvd-start-year: "2016"
+            github-page-count: "20"
+            include-metadata: "true"
+            clean-workspace: "true"
+    name: os_builder (${{ matrix.name }})
     permissions:
       contents: write
       packages: write
@@ -246,7 +287,7 @@ jobs:
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
           vulnerability-db-ref: ${{ env.VDB_REF }}
-          vuln-list-path: vuln-list
+          vuln-list-path: ${{ matrix.vuln-list-path }}
       - uses: ./.github/actions/setup-vdb-build-tools
         with:
           setup-python: "false"
@@ -255,87 +296,21 @@ jobs:
           install-hf-cli: "false"
           enable-break-system-packages: "true"
           dependency-install-extra-args: --no-warn-script-location
-      - name: Build and upload db - 2020
+      - name: Build and upload ${{ matrix.name }} db
         uses: ./.github/actions/build-and-upload-vdb6
         with:
-          vuln-list-path: vuln-list
-          image-xz-repo: appthreat/vdbxz
-          image-zst-repo: appthreat/vdbzst
+          vuln-list-path: ${{ matrix.vuln-list-path }}
+          image-xz-repo: ${{ matrix.image-xz-repo }}
+          image-zst-repo: ${{ matrix.image-zst-repo }}
           version-tag: ${{ env.VDB_VERSION_TAG }}
           stable-tag: ${{ env.VDB_STABLE_TAG }}
-          hf-path-prefix: app-os
+          hf-path-prefix: ${{ matrix.hf-path-prefix }}
           upload-to-hf: "false"
-          nvd-start-year: "2020"
-          github-page-count: "10"
+          nvd-start-year: ${{ matrix.nvd-start-year }}
+          github-page-count: ${{ matrix.github-page-count }}
           python-executable: python3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USERNAME: ${{ github.actor }}
-          PYTHONPATH: vulnerability-db
-      - uses: ./.github/actions/checkout-vdb-dependencies
-        with:
-          checkout-vulnerability-db: "false"
-          vuln-list-path: vuln-list-extended
-      - name: Build and upload extended db - 2020
-        uses: ./.github/actions/build-and-upload-vdb6
-        with:
-          vuln-list-path: vuln-list-extended
-          image-xz-repo: appthreat/vdbxz-extended
-          image-zst-repo: appthreat/vdbzst-extended
-          version-tag: ${{ env.VDB_VERSION_TAG }}
-          stable-tag: ${{ env.VDB_STABLE_TAG }}
-          hf-path-prefix: app-os-extended
-          upload-to-hf: "false"
-          nvd-start-year: "2020"
-          github-page-count: "10"
-          python-executable: python3
-          include-metadata: "true"
-          clean-workspace: "true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USERNAME: ${{ github.actor }}
-          PYTHONPATH: vulnerability-db
-      - uses: ./.github/actions/checkout-vdb-dependencies
-        with:
-          checkout-vulnerability-db: "false"
-          vuln-list-path: vuln-list-10y
-      - name: Build and upload db - 2016
-        uses: ./.github/actions/build-and-upload-vdb6
-        with:
-          vuln-list-path: vuln-list-10y
-          image-xz-repo: appthreat/vdbxz-10y
-          image-zst-repo: appthreat/vdbzst-10y
-          version-tag: ${{ env.VDB_VERSION_TAG }}
-          stable-tag: ${{ env.VDB_STABLE_TAG }}
-          hf-path-prefix: app-os-10y
-          upload-to-hf: "false"
-          nvd-start-year: "2016"
-          github-page-count: "20"
-          python-executable: python3
-          clean-workspace: "true"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USERNAME: ${{ github.actor }}
-          PYTHONPATH: vulnerability-db
-      - uses: ./.github/actions/checkout-vdb-dependencies
-        with:
-          checkout-vulnerability-db: "false"
-          vuln-list-path: vuln-list-10y-extended
-      - name: Build and upload extended db - 2016
-        uses: ./.github/actions/build-and-upload-vdb6
-        with:
-          vuln-list-path: vuln-list-10y-extended
-          image-xz-repo: appthreat/vdbxz-10y-extended
-          image-zst-repo: appthreat/vdbzst-10y-extended
-          version-tag: ${{ env.VDB_VERSION_TAG }}
-          stable-tag: ${{ env.VDB_STABLE_TAG }}
-          hf-path-prefix: app-os-10y-extended
-          upload-to-hf: "false"
-          nvd-start-year: "2016"
-          github-page-count: "20"
-          python-executable: python3
-          include-metadata: "true"
-          clean-workspace: "true"
+          include-metadata: ${{ matrix.include-metadata }}
+          clean-workspace: ${{ matrix.clean-workspace }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
