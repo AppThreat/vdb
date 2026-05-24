@@ -10,6 +10,7 @@ env:
   VDB_VERSION_TAG: v6.7.x
   VDB_STABLE_TAG: ""
   VDB_REF: master
+  VDB_SQLITE_JOURNAL_MODE: off
 jobs:
   app_2y_builder:
     runs-on: ubuntu-latest
@@ -339,4 +340,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
-          VDB_SQLITE_JOURNAL_MODE: off
