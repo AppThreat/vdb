@@ -339,3 +339,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
+          VDB_SQLITE_JOURNAL_MODE: off
