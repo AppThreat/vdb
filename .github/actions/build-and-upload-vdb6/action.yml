@@ -115,8 +115,13 @@ runs:
 
         cd vdb_data
 
-        tar -cvJf data.vdb6.tar.xz data.vdb6
-        tar -cvJf data.index.vdb6.tar.xz data.index.vdb6
+        XZ_THREADS="$(nproc 2>/dev/null || echo 2)"
+        if (( XZ_THREADS > 4 )); then
+          XZ_THREADS=4
+        fi
+        echo "Creating .tar.xz artifacts with xz preset -7 and ${XZ_THREADS} thread(s)"
+        tar -cf - data.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.vdb6.tar.xz
+        tar -cf - data.index.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb6.tar.xz
 
         echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
 
