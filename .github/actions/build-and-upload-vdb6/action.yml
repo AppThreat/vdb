@@ -53,7 +53,7 @@ inputs:
     required: false
     default: "false"
   cache-extra-args:
-    description: Additional arguments passed to the vdb cache command
+    description: Additional newline-delimited arguments passed to the vdb cache command, one argument per line
     required: false
     default: ""
   upload-to-hf:
@@ -99,8 +99,11 @@ runs:
 
         CACHE_ARGS=(--cache-os)
         if [[ -n "$CACHE_EXTRA_ARGS" ]]; then
-          read -r -a EXTRA_CACHE_ARGS <<< "$CACHE_EXTRA_ARGS"
-          CACHE_ARGS+=("${EXTRA_CACHE_ARGS[@]}")
+          while IFS= read -r extra_cache_arg; do
+            if [[ -n "$extra_cache_arg" ]]; then
+              CACHE_ARGS+=("$extra_cache_arg")
+            fi
+          done <<< "$CACHE_EXTRA_ARGS"
         fi
         if [[ "${{ inputs.include-metadata }}" == "true" ]]; then
           CACHE_ARGS+=(--include-metadata)

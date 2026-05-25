@@ -101,7 +101,8 @@ jobs:
           upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "10"
-          cache-extra-args: "--only-aqua"
+          cache-extra-args: |
+            --only-aqua
           clean-workspace: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
