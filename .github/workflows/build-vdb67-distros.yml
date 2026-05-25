@@ -1,0 +1,138 @@
+name: Build and Upload distro vdb 6.7.x
+
+on:
+  schedule:
+    - cron: "55 */12 * * *"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: appthreat/vdb
+  HF_XET_HIGH_PERFORMANCE: 1
+  VDB_VERSION_TAG: v6.7.x
+  VDB_STABLE_TAG: ""
+  VDB_REF: master
+  VDB_SQLITE_JOURNAL_MODE: off
+
+jobs:
+  distro_builder:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: alpine
+            image-xz-repo: appthreat/vdbxz-alpine
+            image-zst-repo: appthreat/vdbzst-alpine
+            hf-path-prefix: alpine
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              alpine
+              alpine-unfixed
+          - name: ubuntu
+            image-xz-repo: appthreat/vdbxz-ubuntu
+            image-zst-repo: appthreat/vdbzst-ubuntu
+            hf-path-prefix: ubuntu
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              ubuntu
+          - name: debian
+            image-xz-repo: appthreat/vdbxz-debian
+            image-zst-repo: appthreat/vdbzst-debian
+            hf-path-prefix: debian
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              debian
+          - name: redhat
+            image-xz-repo: appthreat/vdbxz-redhat
+            image-zst-repo: appthreat/vdbzst-redhat
+            hf-path-prefix: redhat
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              redhat
+          - name: alma
+            image-xz-repo: appthreat/vdbxz-alma
+            image-zst-repo: appthreat/vdbzst-alma
+            hf-path-prefix: alma
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              alma
+          - name: rocky
+            image-xz-repo: appthreat/vdbxz-rocky
+            image-zst-repo: appthreat/vdbzst-rocky
+            hf-path-prefix: rocky
+            vuln-list-sparse-checkout: |
+              nvd/2020
+              nvd/2021
+              nvd/2022
+              nvd/2023
+              nvd/2024
+              nvd/2025
+              nvd/2026
+              rocky
+    name: distro_builder (${{ matrix.name }})
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: ${{ matrix.vuln-list-sparse-checkout }}
+
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+
+      - name: Build and upload ${{ matrix.name }} db - 2020
+        uses: ./.github/actions/build-and-upload-vdb6
+        with:
+          vuln-list-path: vuln-list
+          image-xz-repo: ${{ matrix.image-xz-repo }}
+          image-zst-repo: ${{ matrix.image-zst-repo }}
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
+          hf-path-prefix: ${{ matrix.hf-path-prefix }}
+          upload-to-hf: "false"
+          nvd-start-year: "2020"
+          github-page-count: "10"
+          clean-workspace: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
