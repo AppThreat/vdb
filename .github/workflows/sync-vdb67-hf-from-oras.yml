@@ -1,7 +1,7 @@
 name: Sync vdb 6.7.x Hugging Face from ORAS
 "on":
   schedule:
-    - cron: "17 */6 * * *"
+    - cron: "17 3 * * *"
   workflow_dispatch:
 env:
   HF_XET_HIGH_PERFORMANCE: 1
@@ -47,6 +47,24 @@ jobs:
           - image_xz_repo: appthreat/vdbxz-10y-extended
             image_zst_repo: appthreat/vdbzst-10y-extended
             hf_path_prefix: app-os-10y-extended
+          - image_xz_repo: appthreat/vdbxz-alpine
+            image_zst_repo: appthreat/vdbzst-alpine
+            hf_path_prefix: alpine
+          - image_xz_repo: appthreat/vdbxz-ubuntu
+            image_zst_repo: appthreat/vdbzst-ubuntu
+            hf_path_prefix: ubuntu
+          - image_xz_repo: appthreat/vdbxz-debian
+            image_zst_repo: appthreat/vdbzst-debian
+            hf_path_prefix: debian
+          - image_xz_repo: appthreat/vdbxz-redhat
+            image_zst_repo: appthreat/vdbzst-redhat
+            hf_path_prefix: redhat
+          - image_xz_repo: appthreat/vdbxz-alma
+            image_zst_repo: appthreat/vdbzst-alma
+            hf_path_prefix: alma
+          - image_xz_repo: appthreat/vdbxz-rocky
+            image_zst_repo: appthreat/vdbzst-rocky
+            hf_path_prefix: rocky
     steps:
       - uses: oras-project/setup-oras@38de303aac69abb66f3e6255b7198bff35f323e3 # v2.0.0
       - name: Install Hugging Face CLI and zstd

@@ -189,6 +189,36 @@ runs:
             SIZE_TIME_CONTEXT="10 Years Extended (${{ inputs.nvd-start-year }}+)"
             SIZE_USE_CASE="Legacy OS audits that need metadata search APIs."
             ;;
+          alpine)
+            SIZE_SCOPE="Alpine OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Alpine Linux container and OS package scanning."
+            ;;
+          ubuntu)
+            SIZE_SCOPE="Ubuntu OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Ubuntu container and OS package scanning."
+            ;;
+          debian)
+            SIZE_SCOPE="Debian OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Debian container and OS package scanning."
+            ;;
+          redhat)
+            SIZE_SCOPE="Red Hat OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Red Hat container and OS package scanning."
+            ;;
+          alma)
+            SIZE_SCOPE="AlmaLinux OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="AlmaLinux container and OS package scanning."
+            ;;
+          rocky)
+            SIZE_SCOPE="Rocky Linux OS"
+            SIZE_TIME_CONTEXT="Default (${{ inputs.nvd-start-year }}+)"
+            SIZE_USE_CASE="Rocky Linux container and OS package scanning."
+            ;;
           *)
             SIZE_SCOPE="${{ inputs.hf-path-prefix }}"
             SIZE_TIME_CONTEXT="${{ inputs.nvd-start-year }}+"
