@@ -26,13 +26,6 @@ jobs:
             image-zst-repo: appthreat/vdbzst-alpine
             hf-path-prefix: alpine
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
               alpine
               alpine-unfixed
           - name: ubuntu
@@ -40,65 +33,42 @@ jobs:
             image-zst-repo: appthreat/vdbzst-ubuntu
             hf-path-prefix: ubuntu
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
-              ubuntu
+              ubuntu/2020
+              ubuntu/2021
+              ubuntu/2022
+              ubuntu/2023
+              ubuntu/2024
+              ubuntu/2025
+              ubuntu/2026
           - name: debian
             image-xz-repo: appthreat/vdbxz-debian
             image-zst-repo: appthreat/vdbzst-debian
             hf-path-prefix: debian
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
               debian
           - name: redhat
             image-xz-repo: appthreat/vdbxz-redhat
             image-zst-repo: appthreat/vdbzst-redhat
             hf-path-prefix: redhat
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
-              redhat
+              redhat/2020
+              redhat/2021
+              redhat/2022
+              redhat/2023
+              redhat/2024
+              redhat/2025
+              redhat/2026
           - name: alma
             image-xz-repo: appthreat/vdbxz-alma
             image-zst-repo: appthreat/vdbzst-alma
             hf-path-prefix: alma
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
               alma
           - name: rocky
             image-xz-repo: appthreat/vdbxz-rocky
             image-zst-repo: appthreat/vdbzst-rocky
             hf-path-prefix: rocky
             vuln-list-sparse-checkout: |
-              nvd/2020
-              nvd/2021
-              nvd/2022
-              nvd/2023
-              nvd/2024
-              nvd/2025
-              nvd/2026
               rocky
     name: distro_builder (${{ matrix.name }})
     permissions:
@@ -131,6 +101,7 @@ jobs:
           upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "10"
+          cache-extra-args: "--only-aqua"
           clean-workspace: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -52,6 +52,10 @@ inputs:
     description: Populate extended cve_metadata tables for metadata search APIs
     required: false
     default: "false"
+  cache-extra-args:
+    description: Additional arguments passed to the vdb cache command
+    required: false
+    default: ""
   upload-to-hf:
     description: Upload built artifacts directly to Hugging Face
     required: false
@@ -60,6 +64,8 @@ runs:
   using: composite
   steps:
     - shell: bash
+      env:
+        CACHE_EXTRA_ARGS: ${{ inputs.cache-extra-args }}
       run: |
         set -euo pipefail
 
@@ -92,6 +98,10 @@ runs:
         rm -rf "./${{ inputs.vuln-list-path }}/"
 
         CACHE_ARGS=(--cache-os)
+        if [[ -n "$CACHE_EXTRA_ARGS" ]]; then
+          read -r -a EXTRA_CACHE_ARGS <<< "$CACHE_EXTRA_ARGS"
+          CACHE_ARGS+=("${EXTRA_CACHE_ARGS[@]}")
+        fi
         if [[ "${{ inputs.include-metadata }}" == "true" ]]; then
           CACHE_ARGS+=(--include-metadata)
         fi
