@@ -9,6 +9,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: appthreat/vdb
   HF_XET_HIGH_PERFORMANCE: 1
+  VDB_VERSION_TAG: v6.5.x
+  VDB_STABLE_TAG: "v6"
+  VDB_REF: 'v6.6.2'
 
 jobs:
   app_2y_builder:
@@ -23,7 +26,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2024
@@ -40,6 +43,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app-2y
           image-zst-repo: appthreat/vdbzst-app-2y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-2y
           nvd-start-year: "2024"
           github-page-count: "10"
@@ -63,7 +68,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2020
@@ -84,6 +89,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app
           image-zst-repo: appthreat/vdbzst-app
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app
           nvd-start-year: "2020"
           github-page-count: "30"
@@ -107,7 +114,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2016
@@ -132,6 +139,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app-10y
           image-zst-repo: appthreat/vdbzst-app-10y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-10y
           nvd-start-year: "2016"
           github-page-count: "30"
@@ -155,7 +164,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
 
       - uses: ./.github/actions/setup-vdb-build-tools
@@ -173,6 +182,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz
           image-zst-repo: appthreat/vdbzst
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os
           nvd-start-year: "2020"
           github-page-count: "10"
@@ -195,6 +206,8 @@ jobs:
           vuln-list-path: vuln-list2
           image-xz-repo: appthreat/vdbxz-10y
           image-zst-repo: appthreat/vdbzst-10y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-os-10y
           nvd-start-year: "2016"
           github-page-count: "20"

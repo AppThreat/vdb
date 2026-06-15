@@ -43,6 +43,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app-2y
           image-zst-repo: appthreat/vdbzst-app-2y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-2y
           nvd-start-year: "2024"
           github-page-count: "10"
@@ -87,6 +89,8 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app
           image-zst-repo: appthreat/vdbzst-app
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app
           nvd-start-year: "2020"
           github-page-count: "30"
@@ -136,6 +140,7 @@ jobs:
           image-xz-repo: appthreat/vdbxz-app-10y
           image-zst-repo: appthreat/vdbzst-app-10y
           version-tag: ${{ env.VDB_VERSION_TAG }}
+          stable-tag: ${{ env.VDB_STABLE_TAG }}
           hf-path-prefix: app-10y
           nvd-start-year: "2016"
           github-page-count: "30"
