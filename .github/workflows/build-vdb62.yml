@@ -135,6 +135,7 @@ jobs:
           vuln-list-path: vuln-list
           image-xz-repo: appthreat/vdbxz-app-10y
           image-zst-repo: appthreat/vdbzst-app-10y
+          version-tag: ${{ env.VDB_VERSION_TAG }}
           hf-path-prefix: app-10y
           nvd-start-year: "2016"
           github-page-count: "30"
