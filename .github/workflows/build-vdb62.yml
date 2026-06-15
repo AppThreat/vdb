@@ -1,15 +1,18 @@
-name: Build and Upload vdb 6.5.x (LTS)
+name: Build and Upload vdb 6.2.x (LTS)
 
 on:
   schedule:
-    - cron: "20 */12 * * *"
+    - cron: "30 */12 * * *"
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: appthreat/vdb
   HF_XET_HIGH_PERFORMANCE: 1
-
+  VDB_VERSION_TAG: v6.2.x
+  VDB_STABLE_TAG: ""
+  VDB_REF: 'release/6.2.x'
+  
 jobs:
   app_2y_builder:
     runs-on: ubuntu-latest
@@ -23,7 +26,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2024
@@ -63,7 +66,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2020
@@ -107,7 +110,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
           vuln-list-sparse-checkout: |
             nvd/2016
@@ -155,7 +158,7 @@ jobs:
 
       - uses: ./.github/actions/checkout-vdb-dependencies
         with:
-          vulnerability-db-ref: 'v6.6.2'
+          vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
 
       - uses: ./.github/actions/setup-vdb-build-tools
