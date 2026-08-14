@@ -1,0 +1,229 @@
+name: Build and upload VDB v7
+description: Build VDB v7 artifacts and publish to GHCR with manifest v2
+inputs:
+  vuln-list-path:
+    description: Path of the checked out vuln-list repository
+    required: false
+    default: vuln-list
+  shard-name:
+    description: Shard name used in the GHCR repo suffix and manifest artifact.name (e.g. full, app, pypi)
+    required: false
+    default: full
+  shard-types:
+    description: Comma-separated purl types this shard serves (e.g. "pypi,npm"). Empty for full.
+    required: false
+    default: ""
+  version-tag:
+    description: Version tag for published artifacts (e.g. v7.0.x)
+    required: false
+    default: v7.0.x
+  hf-repo:
+    description: Hugging Face dataset repository
+    required: false
+    default: AppThreat/vdb
+  hf-path-prefix:
+    description: Hugging Face destination prefix for uploaded files
+    required: true
+  nvd-start-year:
+    description: Value for NVD_START_YEAR environment variable
+    required: true
+  github-page-count:
+    description: Value for GITHUB_PAGE_COUNT environment variable
+    required: true
+  python-executable:
+    description: Python executable used to build VDB
+    required: false
+    default: python
+  cleanup-os-directories:
+    description: Remove OS-specific directories from vuln-list before packaging
+    required: false
+    default: "true"
+  clean-workspace:
+    description: Remove build output directories before creating them
+    required: false
+    default: "false"
+  app-only-mode:
+    description: Enable application-only environment flags
+    required: false
+    default: "false"
+  include-metadata:
+    description: Populate extended cve_metadata tables for metadata search APIs
+    required: false
+    default: "false"
+  cache-extra-args:
+    description: Additional newline-delimited arguments passed to the vdb cache command, one argument per line
+    required: false
+    default: ""
+  upload-to-hf:
+    description: Upload built artifacts directly to Hugging Face
+    required: false
+    default: "true"
+  zstd-level:
+    description: zstd compression level (the v6 action used --ultra with no level, defaulting to 3)
+    required: false
+    default: "19"
+  build-id:
+    description: Unique build identifier shared across all artifacts from this build
+    required: true
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        CACHE_EXTRA_ARGS: ${{ inputs.cache-extra-args }}
+        ZSTD_LEVEL: ${{ inputs.zstd-level }}
+        BUILD_ID: ${{ inputs.build-id }}
+        SHARD_NAME: ${{ inputs.shard-name }}
+        SHARD_TYPES: ${{ inputs.shard-types }}
+        VERSION_TAG: ${{ inputs.version-tag }}
+      run: |
+        set -euo pipefail
+
+        export VDB_HOME=vdb_data
+        export VDB_CACHE=vdb_cache
+        export NVD_START_YEAR="${{ inputs.nvd-start-year }}"
+        export GITHUB_PAGE_COUNT="${{ inputs.github-page-count }}"
+
+        if [[ "${{ inputs.app-only-mode }}" == "true" ]]; then
+          export VDB_IGNORE_OS=true
+          export VDB_IGNORE_ALMALINUX=true
+          export VDB_IGNORE_ALPINE=true
+          export VDB_IGNORE_DEBIAN=true
+          export VDB_IGNORE_ROCKYLINUX=true
+        fi
+
+        if [[ "${{ inputs.clean-workspace }}" == "true" ]]; then
+          rm -rf vdb_data vdb_cache
+        fi
+
+        mkdir -p vdb_data vdb_cache
+
+        if [[ "${{ inputs.cleanup-os-directories }}" == "true" ]]; then
+          rm -rf "./${{ inputs.vuln-list-path }}/kevc" "./${{ inputs.vuln-list-path }}/mariner" "./${{ inputs.vuln-list-path }}/cvrf/suse/suse"
+        fi
+
+        zip -q -r vuln-list.zip "./${{ inputs.vuln-list-path }}/"
+        mv vuln-list.zip vdb_cache/
+        rm -rf "./${{ inputs.vuln-list-path }}/"
+
+        CACHE_ARGS=(--cache-os)
+        if [[ -n "$CACHE_EXTRA_ARGS" ]]; then
+          while IFS= read -r extra_cache_arg; do
+            if [[ -n "$extra_cache_arg" ]]; then
+              CACHE_ARGS+=("$extra_cache_arg")
+            fi
+          done <<< "$CACHE_EXTRA_ARGS"
+        fi
+        if [[ "${{ inputs.include-metadata }}" == "true" ]]; then
+          CACHE_ARGS+=(--include-metadata)
+        fi
+        ${{ inputs.python-executable }} vulnerability-db/vdb/cli.py "${CACHE_ARGS[@]}"
+
+        ls -lh vdb_data
+        ls -lh vdb_cache
+
+        cd vdb_data
+
+        # ── Manifest v2 ──────────────────────────────────────────────
+        # Enhance vdb.meta with v2 fields while keeping every existing key
+        # so v6 readers still parse it. build_id is identical across every
+        # artifact from this build — the multi-sync safety key.
+        ${{ inputs.python-executable }} -c "
+        import json, os
+        meta_path = 'vdb.meta'
+        with open(meta_path) as f:
+            meta = json.load(f)
+        shard_types = [t.strip() for t in os.environ.get('SHARD_TYPES', '').split(',') if t.strip()]
+        is_full = os.environ.get('SHARD_NAME', 'full') == 'full'
+        meta['meta_version'] = 2
+        meta['build_id'] = os.environ['BUILD_ID']
+        meta['schema_version'] = 6
+        meta['artifact'] = {
+            'kind': 'full' if is_full else 'shard',
+            'name': os.environ.get('SHARD_NAME', 'full'),
+            'types': shard_types if shard_types else [],
+        }
+        meta['completeness'] = 'full' if is_full else 'partial'
+        meta['compression'] = 'PLACEHOLDER'
+        meta['siblings'] = {
+            'registry': 'ghcr.io/appthreat',
+            'tag': os.environ.get('VERSION_TAG', ''),
+            'available': [],
+        }
+        with open(meta_path, 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        "
+
+        # ── Compression ──────────────────────────────────────────────
+        # FIX: the v6 action ran `zstd --ultra` which only UNLOCKS levels
+        # above 19 but does not select one — zstd defaults to level 3.
+        # Every published .zst was ~32% larger than necessary.
+        # The v7 action passes an explicit level.
+        XZ_THREADS="$(nproc 2>/dev/null || echo 2)"
+        if (( XZ_THREADS > 4 )); then
+          XZ_THREADS=4
+        fi
+        echo "Creating .tar.xz artifacts with xz preset -7 and ${XZ_THREADS} thread(s)"
+        tar -cf - data.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.vdb6.tar.xz
+        tar -cf - data.index.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb6.tar.xz
+
+        echo "Creating .tar.zst artifacts with zstd level ${ZSTD_LEVEL} --ultra"
+        zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb6 -f
+        zstd -"${ZSTD_LEVEL}" --ultra data.vdb6 -f
+
+        echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+        XZ_REPO="ghcr.io/appthreat/vdb7-${SHARD_NAME}"
+        ZST_REPO="ghcr.io/appthreat/vdb7-${SHARD_NAME}"
+
+        # ── Push xz artifact ─────────────────────────────────────────
+        # Patch meta for xz
+        ${{ inputs.python-executable }} -c "
+        import json
+        with open('vdb.meta') as f:
+            meta = json.load(f)
+        meta['compression'] = 'xz'
+        meta['siblings']['available'] = ['full']
+        with open('vdb.meta', 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        "
+
+        oras push "${XZ_REPO}:${VERSION_TAG}-xz" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+
+        oras tag "${XZ_REPO}:${VERSION_TAG}-xz" "v7-xz" "latest-xz"
+
+        if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
+        fi
+
+        # ── Push zst artifact ────────────────────────────────────────
+        # Patch meta for zst
+        ${{ inputs.python-executable }} -c "
+        import json
+        with open('vdb.meta') as f:
+            meta = json.load(f)
+        meta['compression'] = 'zst'
+        with open('vdb.meta', 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        "
+
+        oras push "${ZST_REPO}:${VERSION_TAG}-zst" \
+          --artifact-type application/vnd.oras.config.v1+json \
+          ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+
+        oras tag "${ZST_REPO}:${VERSION_TAG}-zst" "v7-zst" "latest-zst"
+
+        if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
+        fi

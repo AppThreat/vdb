@@ -1,0 +1,99 @@
+name: Build and Upload vdb 7.0.x
+on:
+  schedule:
+    - cron: "40 */12 * * *"
+  workflow_dispatch:
+env:
+  REGISTRY: ghcr.io
+  VDB_VERSION_TAG: v7.0.x
+  VDB_REF: release/7.0.x
+  VDB_SQLITE_JOURNAL_MODE: "off"
+  HF_XET_HIGH_PERFORMANCE: 1
+jobs:
+  full_builder:
+    runs-on: [self-hosted-ubuntu, linux]
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          setup-python: "false"
+          python-executable: python3
+          run-trim: "false"
+          install-hf-cli: "false"
+          enable-break-system-packages: "true"
+          dependency-install-extra-args: --no-warn-script-location
+      - name: Build and upload full db
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: full
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-full
+          upload-to-hf: "false"
+          nvd-start-year: "2020"
+          github-page-count: "10"
+          python-executable: python3
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+      - name: Split and upload shards
+        uses: ./.github/actions/split-and-upload-vdb7
+        with:
+          source-db: vdb_data/data.vdb6
+          source-index: vdb_data/data.index.vdb6
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+          python-executable: python3
+        continue-on-error: true
+  app_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+      - name: Build and upload app-only db
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: app
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-app
+          upload-to-hf: "false"
+          nvd-start-year: "2020"
+          github-page-count: "30"
+          app-only-mode: "true"
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+        continue-on-error: true

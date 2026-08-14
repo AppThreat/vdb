@@ -1,0 +1,49 @@
+name: Split and upload VDB v7 shards
+description: Split a built VDB v7 database by purl type and publish shards to GHCR
+
+inputs:
+  source-db:
+    description: Path to the source data.vdb6 to split
+    required: true
+  source-index:
+    description: Path to the source data.index.vdb6 to split
+    required: true
+  version-tag:
+    description: Version tag for published artifacts (e.g. v7.0.x)
+    required: false
+    default: v7.0.x
+  build-id:
+    description: Unique build identifier shared across all artifacts from this build
+    required: true
+  python-executable:
+    description: Python executable used for the split tool
+    required: false
+    default: python
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        VERSION_TAG: ${{ inputs.version-tag }}
+        BUILD_ID: ${{ inputs.build-id }}
+      run: |
+        set -euo pipefail
+
+        # The split tool (vdb split) does NOT exist yet in vulnerability-db.
+        # This action is structurally complete and mergeable, but the actual
+        # split step is a hard error until the tool is implemented.
+        #
+        # Design doc §3 specifies these shards:
+        #   deb, rpm, apk, app (npm+pypi+maven+golang+nuget+gem+composer+cargo+github),
+        #   cpe (the ~15.9k vendor types)
+        # Plus optional per-ecosystem shards: pypi, npm, maven, golang
+        #
+        # Each shard must pass the match-set gate (contrib/match_set.py) restricted
+        # to its types before publication. A shard that fails its gate must NOT be
+        # published.
+
+        echo "ERROR: The VDB v7 split tool does not exist yet."
+        echo "This action is pending implementation of the splitter in vulnerability-db."
+        echo "See design doc VDB7_ROADMAP_08_SHARDING.md §3 and §4 for the shard spec."
+        exit 1
