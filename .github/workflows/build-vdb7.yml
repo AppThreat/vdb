@@ -1,7 +1,11 @@
 name: Build and Upload vdb 7.0.x
 on:
-  schedule:
-    - cron: "40 */12 * * *"
+  # Dispatch-only until the first end-to-end run is green. This pipeline
+  # has never executed: oras push/tag, GHCR repo creation and the HF
+  # upload are all unverified. Restore the schedule below once a manual
+  # run has published a full artifact set and the sibling index checks out.
+  #   schedule:
+  #     - cron: "40 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
