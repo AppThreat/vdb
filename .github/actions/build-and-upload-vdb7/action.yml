@@ -148,6 +148,11 @@ runs:
         meta['siblings'] = {
             'registry': 'ghcr.io/appthreat',
             'tag': os.environ.get('VERSION_TAG', ''),
+            # Empty at push time. The sibling index is assembled from what
+            # ACTUALLY pushed and published LAST, after every artifact it
+            # advertises (doc 08 §7.4) — a manifest must never advertise an
+            # artifact that failed to push. split-and-upload-vdb7 extends
+            # this list with the shards it publishes.
             'available': [],
         }
         with open(meta_path, 'w') as f:
@@ -177,13 +182,13 @@ runs:
         ZST_REPO="ghcr.io/appthreat/vdb7-${SHARD_NAME}"
 
         # ── Push xz artifact ─────────────────────────────────────────
-        # Patch meta for xz
+        # Patch meta for xz. siblings.available stays empty until the
+        # finalization step after every push.
         ${{ inputs.python-executable }} -c "
         import json
         with open('vdb.meta') as f:
             meta = json.load(f)
         meta['compression'] = 'xz'
-        meta['siblings']['available'] = ['full']
         with open('vdb.meta', 'w') as f:
             json.dump(meta, f, indent=2, sort_keys=True)
         "
@@ -227,3 +232,53 @@ runs:
           hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
           hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
         fi
+
+        # ── Sibling index finalization (LAST, after every push) ──────
+        # Both encodings of this artifact pushed successfully above (a
+        # failure aborts the step before reaching here), so advertising
+        # itself is now truthful. Shards extend this list afterwards in
+        # split-and-upload-vdb7, re-publishing manifests again as their
+        # final step. Layer blobs are content-addressed and already in the
+        # registry, so these re-pushes upload only the config + manifest.
+        ${{ inputs.python-executable }} -c "
+        import json
+        with open('vdb.meta') as f:
+            meta = json.load(f)
+        meta['compression'] = 'xz'
+        meta['siblings']['available'] = ['full']
+        with open('vdb.meta.xz', 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        meta['compression'] = 'zst'
+        with open('vdb.meta.zst', 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        "
+
+        for ENC in xz zst; do
+          LAYER_EXT="tar.xz"
+          MEDIA_SUFFIX="tar"
+          if [[ "$ENC" = "zst" ]]; then
+            LAYER_EXT="zst"
+            MEDIA_SUFFIX="zst"
+          fi
+          cp "vdb.meta.$ENC" vdb.meta
+          oras push "ghcr.io/appthreat/vdb7-${SHARD_NAME}:${VERSION_TAG}-${ENC}" \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            "./data.vdb6.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}" \
+            "./data.index.vdb6.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}"
+          # Re-point the floating tags at the finalized manifest: the push
+          # above minted a new digest, and v7-*/latest-* still resolve to
+          # the earlier manifest carrying siblings.available = [].
+          oras tag "ghcr.io/appthreat/vdb7-${SHARD_NAME}:${VERSION_TAG}-${ENC}" "v7-${ENC}" "latest-${ENC}"
+          rm -f "vdb.meta.$ENC"
+        done
+        # Restore the on-disk meta to the canonical uncompressed form.
+        ${{ inputs.python-executable }} -c "
+        import json
+        with open('vdb.meta') as f:
+            meta = json.load(f)
+        meta['compression'] = 'none'
+        meta['siblings']['available'] = ['full']
+        with open('vdb.meta', 'w') as f:
+            json.dump(meta, f, indent=2, sort_keys=True)
+        "

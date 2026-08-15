@@ -1,5 +1,5 @@
 name: Split and upload VDB v7 shards
-description: Split a built VDB v7 database by purl type and publish shards to GHCR
+description: Split a built VDB v7 database by purl type, gate each shard, and publish shards to GHCR
 
 inputs:
   source-db:
@@ -15,6 +15,18 @@ inputs:
   build-id:
     description: Unique build identifier shared across all artifacts from this build
     required: true
+  shard-list:
+    description: Comma-separated shards to produce (must match contrib/vdb7_split.py DEFAULT_SHARDS)
+    required: false
+    default: deb,rpm,apk,app,cpe,pypi,npm,maven,golang
+  enable-split:
+    description: Run the splitter (false = no-op). Only true because the per-shard match-set gate is green on the FAST fixture (all 9 shards) and on production pypi/npm; flip to false if the gate regresses.
+    required: false
+    default: "true"
+  zstd-level:
+    description: zstd compression level (explicit level; the v6 action's --ultra-only default of 3 shipped ~32% oversized artifacts)
+    required: false
+    default: "19"
   python-executable:
     description: Python executable used for the split tool
     required: false
@@ -27,23 +39,238 @@ runs:
       env:
         VERSION_TAG: ${{ inputs.version-tag }}
         BUILD_ID: ${{ inputs.build-id }}
+        SHARD_LIST: ${{ inputs.shard-list }}
+        ZSTD_LEVEL: ${{ inputs.zstd-level }}
+        SOURCE_DB: ${{ inputs.source-db }}
+        SOURCE_INDEX: ${{ inputs.source-index }}
+        PYTHON: ${{ inputs.python-executable }}
+        # Prefer the checked-out vulnerability-db tree over any previously
+        # installed copy, matching the build step's PYTHONPATH.
+        PYTHONPATH: vulnerability-db
       run: |
         set -euo pipefail
 
-        # The split tool (vdb split) does NOT exist yet in vulnerability-db.
-        # This action is structurally complete and mergeable, but the actual
-        # split step is a hard error until the tool is implemented.
-        #
-        # Design doc §3 specifies these shards:
-        #   deb, rpm, apk, app (npm+pypi+maven+golang+nuget+gem+composer+cargo+github),
-        #   cpe (the ~15.9k vendor types)
-        # Plus optional per-ecosystem shards: pypi, npm, maven, golang
-        #
-        # Each shard must pass the match-set gate (contrib/match_set.py) restricted
-        # to its types before publication. A shard that fails its gate must NOT be
-        # published.
+        if [[ "${{ inputs.enable-split }}" != "true" ]]; then
+          echo "enable-split=false: skipping shard split and upload."
+          exit 0
+        fi
 
-        echo "ERROR: The VDB v7 split tool does not exist yet."
-        echo "This action is pending implementation of the splitter in vulnerability-db."
-        echo "See design doc VDB7_ROADMAP_08_SHARDING.md §3 and §4 for the shard spec."
-        exit 1
+        # ── Preflight: build_id must be identical across every artifact ──
+        # (doc 08 §5/§7.1 — the multi-sync safety key). The full artifact's
+        # meta was stamped by build-and-upload-vdb7; a mismatch here means
+        # the two actions were wired to different builds.
+        "$PYTHON" -c "
+        import json, sys
+        with open('$(dirname "$SOURCE_DB")/vdb.meta') as f:
+            meta = json.load(f)
+        if meta.get('build_id') != '$BUILD_ID':
+            print(f\"ERROR: full artifact build_id {meta.get('build_id')!r} != split build_id {'$BUILD_ID'!r}\", file=sys.stderr)
+            sys.exit(1)
+        print(f\"build_id OK: {meta['build_id']}\")
+        "
+
+        # ── Split (source opened read-only; never modified) ──────────
+        "$PYTHON" vulnerability-db/contrib/vdb7_split.py split \
+          --db-file "$SOURCE_DB" \
+          --index-file "$SOURCE_INDEX" \
+          -o vdb_shards \
+          --shards "$SHARD_LIST" \
+          --build-id "$BUILD_ID" \
+          --version-tag "$VERSION_TAG" \
+          --report vdb_shards/split_report.json -v
+
+        # ── Round-trip: group shards must partition the full DB ──────
+        "$PYTHON" vulnerability-db/contrib/vdb7_split.py verify \
+          --db-file "$SOURCE_DB" \
+          --index-file "$SOURCE_INDEX" \
+          --shards-root vdb_shards \
+          --report vdb_shards/verify_report.json > /dev/null
+
+        # ── Gate: per-shard match-set equivalence ────────────────────
+        # A shard is published ONLY if its own gate passes (doc 08 §2).
+        # shard-gate exits non-zero when any shard fails; the per-shard
+        # verdicts in gate_report.json decide what may still publish.
+        GATE_RC=0
+        "$PYTHON" vulnerability-db/contrib/match_set.py shard-gate \
+          --full-db "$SOURCE_DB" \
+          --full-index "$SOURCE_INDEX" \
+          --shards-root vdb_shards \
+          --corpus-dir vulnerability-db/test/data/match_set_corpus \
+          -o vdb_shards/gate_report.json || GATE_RC=$?
+
+        # Shards eligible to publish: non-empty AND gate-clean.
+        PUBLISHABLE=$( "$PYTHON" - <<'PYEOF'
+        import json
+        split_report = json.load(open("vdb_shards/split_report.json"))
+        gate_report = json.load(open("vdb_shards/gate_report.json"))
+        empty = {s["shard"] for s in split_report["shards"] if s.get("empty")}
+        for name, verdict in sorted(gate_report["shards"].items()):
+            if name in empty:
+                print(f"SKIP {name}: empty shard (no rows for its types)")
+            elif verdict.get("clean"):
+                print(name)
+            else:
+                print(f"SKIP {name}: FAILED gate (corpus={verdict['corpus']['status']}, "
+                      f"prefix_probes={verdict['prefix_probes'].get('status')}, "
+                      f"unsafe_raises={verdict['unsafe_entry_points']['clean']}, "
+                      f"absent_type={verdict['absent_type'].get('status')})")
+        PYEOF
+        )
+        echo "Shards eligible to publish:"
+        echo "$PUBLISHABLE"
+
+        SHARDS_TO_PUSH=$(echo "$PUBLISHABLE" | grep -v '^SKIP ' || true)
+        if [[ -z "$SHARDS_TO_PUSH" ]]; then
+          echo "ERROR: no shard passed the gate; nothing to publish."
+          exit 1
+        fi
+
+        # ── Compression ──────────────────────────────────────────────
+        XZ_THREADS="$(nproc 2>/dev/null || echo 2)"
+        if (( XZ_THREADS > 4 )); then
+          XZ_THREADS=4
+        fi
+
+        echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+        # What ACTUALLY pushed — the sibling index is assembled from this
+        # list only (doc 08 §7.4), and the manifest is re-published LAST,
+        # after every shard it advertises.
+        declare -a PUSHED_SHARDS=()
+        PUSH_FAILURES=0
+
+        for SHARD in $SHARDS_TO_PUSH; do
+          SHARD_DIR="vdb_shards/$SHARD"
+          REPO="ghcr.io/appthreat/vdb7-$SHARD"
+
+          # B3: every shard meta must carry this build's build_id.
+          "$PYTHON" -c "
+          import json, sys
+          with open('$SHARD_DIR/vdb.meta') as f:
+              meta = json.load(f)
+          if meta.get('build_id') != '$BUILD_ID':
+              print(f'ERROR: shard $SHARD build_id {meta.get(\"build_id\")!r} != $BUILD_ID', file=sys.stderr)
+              sys.exit(1)
+          "
+
+          echo "Compressing shard $SHARD (xz -7, ${XZ_THREADS} thread(s); zstd -${ZSTD_LEVEL} --ultra)"
+          (cd "$SHARD_DIR" \
+            && tar -cf - data.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.vdb6.tar.xz \
+            && tar -cf - data.index.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb6.tar.xz \
+            && zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb6 -f \
+            && zstd -"${ZSTD_LEVEL}" --ultra data.vdb6 -f)
+
+          PUSH_OK=1
+
+          # xz artifact
+          "$PYTHON" -c "
+          import json
+          with open('$SHARD_DIR/vdb.meta') as f: meta = json.load(f)
+          meta['compression'] = 'xz'
+          meta['siblings']['available'] = []
+          with open('$SHARD_DIR/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
+          "
+          (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-xz" \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar) || PUSH_OK=0
+          if (( PUSH_OK )); then
+            oras tag "${REPO}:${VERSION_TAG}-xz" "v7-xz" "latest-xz" || PUSH_OK=0
+          fi
+
+          # zst artifact
+          if (( PUSH_OK )); then
+            "$PYTHON" -c "
+            import json
+            with open('$SHARD_DIR/vdb.meta') as f: meta = json.load(f)
+            meta['compression'] = 'zst'
+            meta['siblings']['available'] = []
+            with open('$SHARD_DIR/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
+            "
+            (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-zst" \
+              --artifact-type application/vnd.oras.config.v1+json \
+              ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+              ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+              ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst) || PUSH_OK=0
+          fi
+          if (( PUSH_OK )); then
+            oras tag "${REPO}:${VERSION_TAG}-zst" "v7-zst" "latest-zst" || PUSH_OK=0
+          fi
+
+          if (( PUSH_OK )); then
+            PUSHED_SHARDS+=("$SHARD")
+          else
+            PUSH_FAILURES=1
+            echo "WARNING: shard $SHARD failed to push; it will NOT be advertised in siblings."
+          fi
+        done
+
+        if [[ ${#PUSHED_SHARDS[@]} -eq 0 ]]; then
+          echo "ERROR: every gated shard failed to push."
+          exit 1
+        fi
+
+        # ── Sibling index: assembled from what actually pushed, and ──
+        # ── published LAST, after every shard it advertises ──────────
+        SIBLINGS_JSON=$(printf '%s\n' "${PUSHED_SHARDS[@]}" | "$PYTHON" -c "
+        import json, sys
+        shards = ['full'] + [l.strip() for l in sys.stdin if l.strip()]
+        print(json.dumps(shards))
+        ")
+        echo "Publishing sibling index (available: $SIBLINGS_JSON) as the FINAL step."
+
+        republish_manifest() {
+          local dir="$1" repo="$2" suffix="$3"
+          # Layer file names and media types follow the build action's
+          # convention: xz layers are tar.xz (+tar media type), zst layers
+          # are bare .zst (+zst media type).
+          local layer_ext="${suffix}" media_suffix="zst"
+          if [[ "$suffix" = "xz" ]]; then
+            layer_ext="tar.xz"
+            media_suffix="tar"
+          fi
+          "$PYTHON" -c "
+          import json
+          with open('$dir/vdb.meta') as f: meta = json.load(f)
+          meta['compression'] = '$suffix'
+          meta['siblings']['available'] = json.loads('''$SIBLINGS_JSON''')
+          with open('$dir/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
+          "
+          (cd "$dir" && oras push "${repo}:${VERSION_TAG}-${suffix}" \
+            --artifact-type application/vnd.oras.config.v1+json \
+            ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
+            "./data.vdb6.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}" \
+            "./data.index.vdb6.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}")
+          # Re-point the floating tags. This push minted a NEW manifest
+          # digest; v7-*/latest-* were set before finalization and still
+          # resolve to a manifest whose siblings.available is []. Most
+          # clients pull a floating tag, so without this the sibling index
+          # is invisible to exactly the consumers it exists for.
+          oras tag "${repo}:${VERSION_TAG}-${suffix}" "v7-${suffix}" "latest-${suffix}"
+        }
+
+        # Full artifact manifests first, then every pushed shard's. Layers
+        # are content-addressed and already in the registry, so these
+        # re-pushes upload only the updated config (meta) + manifest.
+        FULL_DIR="$(dirname "$SOURCE_DB")"
+        republish_manifest "$FULL_DIR" "ghcr.io/appthreat/vdb7-full" xz
+        republish_manifest "$FULL_DIR" "ghcr.io/appthreat/vdb7-full" zst
+        for SHARD in "${PUSHED_SHARDS[@]}"; do
+          republish_manifest "vdb_shards/$SHARD" "ghcr.io/appthreat/vdb7-$SHARD" xz
+          republish_manifest "vdb_shards/$SHARD" "ghcr.io/appthreat/vdb7-$SHARD" zst
+        done
+
+        echo "Split and publish complete. build_id=$BUILD_ID siblings=$SIBLINGS_JSON"
+
+        if (( GATE_RC != 0 )); then
+          echo "ERROR: one or more shards FAILED the match-set gate and were not published."
+          echo "See vdb_shards/gate_report.json above for per-shard verdicts."
+          exit 1
+        fi
+
+        if (( PUSH_FAILURES != 0 )); then
+          echo "ERROR: one or more gated shards failed to push (see WARNINGs above)."
+          echo "The sibling index advertises only what actually published."
+          exit 1
+        fi
