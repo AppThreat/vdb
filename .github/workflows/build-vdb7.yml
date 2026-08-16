@@ -1,11 +1,11 @@
 name: Build and Upload vdb 7.0.x
 on:
-  # Dispatch-only until the first end-to-end run is green. This pipeline
-  # has never executed: oras push/tag, GHCR repo creation and the HF
-  # upload are all unverified. Restore the schedule below once a manual
-  # run has published a full artifact set and the sibling index checks out.
-  #   schedule:
-  #     - cron: "40 */12 * * *"
+  # Twice daily, like the v6 pipelines. The minute is unique across the
+  # workflows in this repo (10/20/30/40/55 are taken) so the self-hosted
+  # runner does not start two multi-hour builds at the same instant — the
+  # full v7 build took 2h37m on its first run.
+  schedule:
+    - cron: "45 */12 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io
@@ -59,6 +59,14 @@ jobs:
           version-tag: ${{ env.VDB_VERSION_TAG }}
           build-id: ${{ github.run_id }}-${{ github.run_attempt }}
           python-executable: python3
+        # The action logs in to GHCR with these. A composite action does not
+        # inherit the job's env, so without this block `oras login` runs
+        # under `set -u` with both names unset and the shard publish dies
+        # after a 2.5-hour build — which is exactly what happened in run
+        # 31926611613, where every shard passed its gate and none shipped.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
         continue-on-error: true
   app_builder:
     runs-on: ubuntu-latest

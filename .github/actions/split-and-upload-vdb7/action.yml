@@ -131,6 +131,17 @@ runs:
           XZ_THREADS=4
         fi
 
+        # Credentials come from the caller's step env (a composite action
+        # does not inherit the job's env). Check them by name before use so
+        # a missing one says so instead of tripping `set -u` with a bare
+        # "unbound variable" two and a half hours into a build. Never echo
+        # the values.
+        if [[ -z "${GITHUB_TOKEN:-}" || -z "${GITHUB_USERNAME:-}" ]]; then
+          echo "ERROR: GITHUB_TOKEN and GITHUB_USERNAME must be set in this" \
+               "step's env: block for the GHCR login. Every shard was built" \
+               "and gated; none can be published without them." >&2
+          exit 1
+        fi
         echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
 
         # What ACTUALLY pushed — the sibling index is assembled from this
