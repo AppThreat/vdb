@@ -1,0 +1,26 @@
+.github/actions/split-and-upload-vdb7/action.yml
+  s_359332f277deb8::t_a630eb88c82d00 73,83
+  s_359332f277deb8::t_f62f41ff8c163a 19
+.github/actions/build-and-upload-vdb7/action.yml
+  s_359332f277deb8::t_92abd989f7967d 120-124
+.github/workflows/build-vdb67-distros.yml
+  s_359332f277deb8::t_6e9d09ba12477e 14,110
+.github/workflows/build-vdb67.yml
+  s_359332f277deb8::t_413dd2791b9870 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f69ca6fbea9aca7b79f2cc5c44c81bb78cd01475",
+  "prompts": {},
+  "sessions": {
+    "s_359332f277deb8": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff843bb51ffeNmplBiQ1KdNuXm",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
