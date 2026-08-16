@@ -174,12 +174,12 @@ runs:
           XZ_THREADS=4
         fi
         echo "Creating .tar.xz artifacts with xz preset -7 and ${XZ_THREADS} thread(s)"
-        tar -cf - data.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.vdb6.tar.xz
-        tar -cf - data.index.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb6.tar.xz
+        tar -cf - data.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.vdb7.tar.xz
+        tar -cf - data.index.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb7.tar.xz
 
         echo "Creating .tar.zst artifacts with zstd level ${ZSTD_LEVEL} --ultra"
-        zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb6 -f
-        zstd -"${ZSTD_LEVEL}" --ultra data.vdb6 -f
+        zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb7 -f
+        zstd -"${ZSTD_LEVEL}" --ultra data.vdb7 -f
 
         echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
 
@@ -201,14 +201,14 @@ runs:
         oras push "${XZ_REPO}:${VERSION_TAG}-xz" \
           --artifact-type application/vnd.oras.config.v1+json \
           ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-          ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
+          ./data.vdb7.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+          ./data.index.vdb7.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar
 
         oras tag "${XZ_REPO}:${VERSION_TAG}-xz" "v7-xz" "latest-xz"
 
         if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
-          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb6.tar.xz"
-          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb6.tar.xz"
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.tar.xz" "${{ inputs.hf-repo }}" ./data.vdb7.tar.xz "${{ inputs.hf-path-prefix }}/data.vdb7.tar.xz"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb7.tar.xz "${{ inputs.hf-path-prefix }}/data.index.vdb7.tar.xz"
         fi
 
         # ── Push zst artifact ────────────────────────────────────────
@@ -225,16 +225,16 @@ runs:
         oras push "${ZST_REPO}:${VERSION_TAG}-zst" \
           --artifact-type application/vnd.oras.config.v1+json \
           ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-          ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-          ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst
+          ./data.vdb7.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+          ./data.index.vdb7.zst:application/vnd.appthreat.vdb.layer.v1+zst
 
         oras tag "${ZST_REPO}:${VERSION_TAG}-zst" "v7-zst" "latest-zst"
 
         if [[ "${{ inputs.upload-to-hf }}" == "true" ]]; then
-          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb6.zst "${{ inputs.hf-path-prefix }}/data.vdb6.zst"
-          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6.zst "${{ inputs.hf-path-prefix }}/data.index.vdb6.zst"
-          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb6" "${{ inputs.hf-repo }}" ./data.vdb6 "${{ inputs.hf-path-prefix }}/data.vdb6"
-          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb6 "${{ inputs.hf-path-prefix }}/data.index.vdb6"
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.zst" "${{ inputs.hf-repo }}" ./data.vdb7.zst "${{ inputs.hf-path-prefix }}/data.vdb7.zst"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb7.zst "${{ inputs.hf-path-prefix }}/data.index.vdb7.zst"
+          hf upload --quiet --repo-type dataset --delete "${{ inputs.hf-path-prefix }}/*.vdb7" "${{ inputs.hf-repo }}" ./data.vdb7 "${{ inputs.hf-path-prefix }}/data.vdb7"
+          hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./data.index.vdb7 "${{ inputs.hf-path-prefix }}/data.index.vdb7"
           hf upload --quiet --repo-type dataset "${{ inputs.hf-repo }}" ./vdb.meta "${{ inputs.hf-path-prefix }}/vdb.meta"
         fi
 
@@ -269,8 +269,8 @@ runs:
           oras push "ghcr.io/appthreat/vdb7-${SHARD_NAME}:${VERSION_TAG}-${ENC}" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            "./data.vdb6.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}" \
-            "./data.index.vdb6.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}"
+            "./data.vdb7.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}" \
+            "./data.index.vdb7.${LAYER_EXT}:application/vnd.appthreat.vdb.layer.v1+${MEDIA_SUFFIX}"
           # Re-point the floating tags at the finalized manifest: the push
           # above minted a new digest, and v7-*/latest-* still resolve to
           # the earlier manifest carrying siblings.available = [].

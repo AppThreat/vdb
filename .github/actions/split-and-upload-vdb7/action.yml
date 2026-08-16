@@ -3,10 +3,10 @@ description: Split a built VDB v7 database by purl type, gate each shard, and pu
 
 inputs:
   source-db:
-    description: Path to the source data.vdb6 to split
+    description: Path to the source data.vdb7 to split
     required: true
   source-index:
-    description: Path to the source data.index.vdb6 to split
+    description: Path to the source data.index.vdb7 to split
     required: true
   version-tag:
     description: Version tag for published artifacts (e.g. v7.0.x)
@@ -155,10 +155,10 @@ runs:
 
           echo "Compressing shard $SHARD (xz -7, ${XZ_THREADS} thread(s); zstd -${ZSTD_LEVEL} --ultra)"
           (cd "$SHARD_DIR" \
-            && tar -cf - data.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.vdb6.tar.xz \
-            && tar -cf - data.index.vdb6 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb6.tar.xz \
-            && zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb6 -f \
-            && zstd -"${ZSTD_LEVEL}" --ultra data.vdb6 -f)
+            && tar -cf - data.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.vdb7.tar.xz \
+            && tar -cf - data.index.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb7.tar.xz \
+            && zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb7 -f \
+            && zstd -"${ZSTD_LEVEL}" --ultra data.vdb7 -f)
 
           PUSH_OK=1
 
@@ -173,8 +173,8 @@ runs:
           (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-xz" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            ./data.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
-            ./data.index.vdb6.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar) || PUSH_OK=0
+            ./data.vdb7.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar \
+            ./data.index.vdb7.tar.xz:application/vnd.appthreat.vdb.layer.v1+tar) || PUSH_OK=0
           if (( PUSH_OK )); then
             oras tag "${REPO}:${VERSION_TAG}-xz" "v7-xz" "latest-xz" || PUSH_OK=0
           fi
@@ -191,8 +191,8 @@ runs:
             (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-zst" \
               --artifact-type application/vnd.oras.config.v1+json \
               ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-              ./data.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst \
-              ./data.index.vdb6.zst:application/vnd.appthreat.vdb.layer.v1+zst) || PUSH_OK=0
+              ./data.vdb7.zst:application/vnd.appthreat.vdb.layer.v1+zst \
+              ./data.index.vdb7.zst:application/vnd.appthreat.vdb.layer.v1+zst) || PUSH_OK=0
           fi
           if (( PUSH_OK )); then
             oras tag "${REPO}:${VERSION_TAG}-zst" "v7-zst" "latest-zst" || PUSH_OK=0
@@ -240,8 +240,8 @@ runs:
           (cd "$dir" && oras push "${repo}:${VERSION_TAG}-${suffix}" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
-            "./data.vdb6.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}" \
-            "./data.index.vdb6.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}")
+            "./data.vdb7.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}" \
+            "./data.index.vdb7.${layer_ext}:application/vnd.appthreat.vdb.layer.v1+${media_suffix}")
           # Re-point the floating tags. This push minted a NEW manifest
           # digest; v7-*/latest-* were set before finalization and still
           # resolve to a manifest whose siblings.available is []. Most

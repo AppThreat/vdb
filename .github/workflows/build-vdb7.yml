@@ -54,8 +54,8 @@ jobs:
       - name: Split and upload shards
         uses: ./.github/actions/split-and-upload-vdb7
         with:
-          source-db: vdb_data/data.vdb6
-          source-index: vdb_data/data.index.vdb6
+          source-db: vdb_data/data.vdb7
+          source-index: vdb_data/data.index.vdb7
           version-tag: ${{ env.VDB_VERSION_TAG }}
           build-id: ${{ github.run_id }}-${{ github.run_attempt }}
           python-executable: python3
