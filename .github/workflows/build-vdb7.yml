@@ -1,11 +1,10 @@
 name: Build and Upload vdb 7.0.x
 on:
-  # Twice daily, like the v6 pipelines. The minute is unique across the
-  # workflows in this repo (10/20/30/40/55 are taken) so the self-hosted
-  # runner does not start two multi-hour builds at the same instant — the
-  # full v7 build took 2h37m on its first run.
+  # Twice daily. Offset from the v6.7 (00:40/12:40) and v6.5 (08:20)
+  # self-hosted schedules so the single runner does not queue multi-hour
+  # builds — the full v7 build took 2h37m on its first run.
   schedule:
-    - cron: "45 */12 * * *"
+    - cron: "45 4,16 * * *"
   workflow_dispatch:
 env:
   REGISTRY: ghcr.io

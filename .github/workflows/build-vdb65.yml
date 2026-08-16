@@ -2,7 +2,7 @@ name: Build and Upload vdb 6.5.x (LTS)
 
 on:
   schedule:
-    - cron: "20 */12 * * *"
+    - cron: "20 8 * * *"
   workflow_dispatch:
 
 env:
