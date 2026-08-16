@@ -117,6 +117,11 @@ runs:
         if [[ "${{ inputs.include-metadata }}" == "true" ]]; then
           CACHE_ARGS+=(--include-metadata)
         fi
+        # Shard production belongs to the gated split-and-upload-vdb7 action
+        # (match-set gate, per-shard publish, sibling index). The build's own
+        # default post-build split is therefore disabled here — letting it
+        # run would double the split cost and produce ungated shards.
+        CACHE_ARGS+=(--no-split)
         ${{ inputs.python-executable }} vulnerability-db/vdb/cli.py "${CACHE_ARGS[@]}"
 
         ls -lh vdb_data

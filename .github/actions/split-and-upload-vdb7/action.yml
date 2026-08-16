@@ -16,7 +16,7 @@ inputs:
     description: Unique build identifier shared across all artifacts from this build
     required: true
   shard-list:
-    description: Comma-separated shards to produce (must match contrib/vdb7_split.py DEFAULT_SHARDS)
+    description: Comma-separated shards to produce (must match DEFAULT_SHARDS in vulnerability-db vdb/lib/db7_split.py)
     required: false
     default: deb,rpm,apk,app,cpe,pypi,npm,maven,golang
   enable-split:
@@ -70,7 +70,7 @@ runs:
         "
 
         # ── Split (source opened read-only; never modified) ──────────
-        "$PYTHON" vulnerability-db/contrib/vdb7_split.py split \
+        "$PYTHON" -m vdb.lib.db7_split split \
           --db-file "$SOURCE_DB" \
           --index-file "$SOURCE_INDEX" \
           -o vdb_shards \
@@ -80,7 +80,7 @@ runs:
           --report vdb_shards/split_report.json -v
 
         # ── Round-trip: group shards must partition the full DB ──────
-        "$PYTHON" vulnerability-db/contrib/vdb7_split.py verify \
+        "$PYTHON" -m vdb.lib.db7_split verify \
           --db-file "$SOURCE_DB" \
           --index-file "$SOURCE_INDEX" \
           --shards-root vdb_shards \
