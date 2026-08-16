@@ -1,0 +1,23 @@
+.github/workflows/build-vdb7.yml
+  s_df695bd889e646::t_79f1a8e22e0b80 3-5,7
+.github/workflows/build-vdb65.yml
+  s_df695bd889e646::t_939f581ac30e4e 5
+.github/workflows/build-vdb62.yml
+  s_df695bd889e646::t_cb546035e361f0 5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c28bc31b5bf9a25006dd54c93577838c2d63777e",
+  "prompts": {},
+  "sessions": {
+    "s_df695bd889e646": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff30ca1bbffeBLE4MbKqgwDQz8",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
