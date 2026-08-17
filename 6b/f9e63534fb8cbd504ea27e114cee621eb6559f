@@ -1,0 +1,33 @@
+.github/actions/split-and-upload-vdb7/vdb7_meta.py
+  s_7ea0afbaea7b7a::t_01e4d953f0d07a 1,19-71,73,75-79,81-113
+  s_7ea0afbaea7b7a::t_fae1cedee93855 2-18
+  s_7ea0afbaea7b7a::t_d8127b93680b38 72,74,80,114-116
+.github/workflows/build-vdb7.yml
+  s_7ea0afbaea7b7a::t_edb9e0b18ec2c9 69-72
+.github/actions/split-and-upload-vdb7/action.yml
+  s_7ea0afbaea7b7a::t_7fc6d8c7831f6a 69-70
+  s_7ea0afbaea7b7a::t_85ca11d9d609da 156
+  s_7ea0afbaea7b7a::t_0334eccd6600af 54-58
+  s_7ea0afbaea7b7a::t_0151adc8bca48e 168
+  s_7ea0afbaea7b7a::t_c5e8da9b4ca455 102-103
+  s_7ea0afbaea7b7a::t_49d433149ec97d 53,59
+  s_7ea0afbaea7b7a::t_5c4a25fb85a3b1 194-195
+  s_7ea0afbaea7b7a::t_1bcd6e040ee082 143-144
+  s_7ea0afbaea7b7a::t_7e88b8076cbe33 207-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6bf9e63534fb8cbd504ea27e114cee621eb6559f",
+  "prompts": {},
+  "sessions": {
+    "s_7ea0afbaea7b7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b22504da-3375-497c-81a2-b20e1e9cedea",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
