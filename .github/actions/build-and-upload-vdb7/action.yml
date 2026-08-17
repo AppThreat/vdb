@@ -99,7 +99,16 @@ runs:
         mkdir -p vdb_data vdb_cache
 
         if [[ "${{ inputs.cleanup-os-directories }}" == "true" ]]; then
-          rm -rf "./${{ inputs.vuln-list-path }}/kevc" "./${{ inputs.vuln-list-path }}/mariner" "./${{ inputs.vuln-list-path }}/cvrf/suse/suse"
+          # ubuntu and debian are ingested from the OSV feeds instead
+          # (vulnerability-db tasks 10.6/10.8) and their vuln-list subtrees
+          # are in DEFAULT_IGNORE_SOURCE_PATTERNS, so zipping them only pays
+          # to compress and re-read data the build discards. Keep them for
+          # the v5/v6 actions, which still read them.
+          rm -rf "./${{ inputs.vuln-list-path }}/kevc" \
+                 "./${{ inputs.vuln-list-path }}/mariner" \
+                 "./${{ inputs.vuln-list-path }}/cvrf/suse/suse" \
+                 "./${{ inputs.vuln-list-path }}/ubuntu" \
+                 "./${{ inputs.vuln-list-path }}/debian"
         fi
 
         zip -q -r vuln-list.zip "./${{ inputs.vuln-list-path }}/"
