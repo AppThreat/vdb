@@ -99,16 +99,18 @@ runs:
         mkdir -p vdb_data vdb_cache
 
         if [[ "${{ inputs.cleanup-os-directories }}" == "true" ]]; then
-          # ubuntu, debian and redhat are ingested from the OSV feeds
-          # instead (vulnerability-db tasks 10.6/10.8/10.10) and their
-          # vuln-list subtrees are in DEFAULT_IGNORE_SOURCE_PATTERNS, so
-          # zipping them only pays to compress and re-read data the build
-          # discards: 3,313 MB + 480 MB + 196 MB uncompressed, 243k of the
-          # tree's 873k files. Keep them for the v5/v6 actions, which still
-          # read them.
+          # ubuntu, debian, redhat and the whole cvrf/suse tree (SUSE +
+          # openSUSE) are ingested from the OSV feeds instead
+          # (vulnerability-db tasks 10.6/10.8/10.10/10.11) and their
+          # vuln-list subtrees are ignored at ingest, so zipping them only
+          # pays to compress and re-read data the build discards:
+          # 3,313 + 480 + 196 + 2,217 MB uncompressed, 279k of the tree's
+          # 873k files. cvrf holds nothing but suse/ and opensuse/, so the
+          # whole directory goes. Keep them for the v5/v6 actions, which
+          # still read them.
           rm -rf "./${{ inputs.vuln-list-path }}/kevc" \
                  "./${{ inputs.vuln-list-path }}/mariner" \
-                 "./${{ inputs.vuln-list-path }}/cvrf/suse/suse" \
+                 "./${{ inputs.vuln-list-path }}/cvrf" \
                  "./${{ inputs.vuln-list-path }}/ubuntu" \
                  "./${{ inputs.vuln-list-path }}/debian" \
                  "./${{ inputs.vuln-list-path }}/redhat"
