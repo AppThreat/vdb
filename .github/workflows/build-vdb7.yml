@@ -66,7 +66,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
-        continue-on-error: true
+        # No continue-on-error here. It masked run 31997633626 as green while
+        # every shard failed to publish, and it cannot protect anything: the
+        # full artifact was already pushed by the previous step, so a red job
+        # only reports what actually happened.
   app_builder:
     runs-on: ubuntu-latest
     permissions:

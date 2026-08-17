@@ -50,6 +50,13 @@ runs:
       run: |
         set -euo pipefail
 
+        # Helper for the JSON steps (meta stamping, build_id preflight,
+        # gate triage), shared with build-and-upload-vdb7. Inline
+        # `python -c` blocks cannot work here: a YAML block scalar cannot
+        # dedent them to column 0 and Python rejects an indented first
+        # statement.
+        META_TOOL="$GITHUB_ACTION_PATH/vdb7_meta.py"
+
         if [[ "${{ inputs.enable-split }}" != "true" ]]; then
           echo "enable-split=false: skipping shard split and upload."
           exit 0
@@ -59,15 +66,8 @@ runs:
         # (doc 08 §5/§7.1 — the multi-sync safety key). The full artifact's
         # meta was stamped by build-and-upload-vdb7; a mismatch here means
         # the two actions were wired to different builds.
-        "$PYTHON" -c "
-        import json, sys
-        with open('$(dirname "$SOURCE_DB")/vdb.meta') as f:
-            meta = json.load(f)
-        if meta.get('build_id') != '$BUILD_ID':
-            print(f\"ERROR: full artifact build_id {meta.get('build_id')!r} != split build_id {'$BUILD_ID'!r}\", file=sys.stderr)
-            sys.exit(1)
-        print(f\"build_id OK: {meta['build_id']}\")
-        "
+        "$PYTHON" "$META_TOOL" check-build-id \
+          "$(dirname "$SOURCE_DB")/vdb.meta" "$BUILD_ID" --label "full artifact"
 
         # ── Split (source opened read-only; never modified) ──────────
         "$PYTHON" -m vdb.lib.db7_split split \
@@ -99,23 +99,8 @@ runs:
           -o vdb_shards/gate_report.json || GATE_RC=$?
 
         # Shards eligible to publish: non-empty AND gate-clean.
-        PUBLISHABLE=$( "$PYTHON" - <<'PYEOF'
-        import json
-        split_report = json.load(open("vdb_shards/split_report.json"))
-        gate_report = json.load(open("vdb_shards/gate_report.json"))
-        empty = {s["shard"] for s in split_report["shards"] if s.get("empty")}
-        for name, verdict in sorted(gate_report["shards"].items()):
-            if name in empty:
-                print(f"SKIP {name}: empty shard (no rows for its types)")
-            elif verdict.get("clean"):
-                print(name)
-            else:
-                print(f"SKIP {name}: FAILED gate (corpus={verdict['corpus']['status']}, "
-                      f"prefix_probes={verdict['prefix_probes'].get('status')}, "
-                      f"unsafe_raises={verdict['unsafe_entry_points']['clean']}, "
-                      f"absent_type={verdict['absent_type'].get('status')})")
-        PYEOF
-        )
+        PUBLISHABLE=$("$PYTHON" "$META_TOOL" publishable \
+          vdb_shards/split_report.json vdb_shards/gate_report.json)
         echo "Shards eligible to publish:"
         echo "$PUBLISHABLE"
 
@@ -155,14 +140,8 @@ runs:
           REPO="ghcr.io/appthreat/vdb7-$SHARD"
 
           # B3: every shard meta must carry this build's build_id.
-          "$PYTHON" -c "
-          import json, sys
-          with open('$SHARD_DIR/vdb.meta') as f:
-              meta = json.load(f)
-          if meta.get('build_id') != '$BUILD_ID':
-              print(f'ERROR: shard $SHARD build_id {meta.get(\"build_id\")!r} != $BUILD_ID', file=sys.stderr)
-              sys.exit(1)
-          "
+          "$PYTHON" "$META_TOOL" check-build-id \
+            "$SHARD_DIR/vdb.meta" "$BUILD_ID" --label "shard $SHARD"
 
           echo "Compressing shard $SHARD (xz -7, ${XZ_THREADS} thread(s); zstd -${ZSTD_LEVEL} --ultra)"
           (cd "$SHARD_DIR" \
@@ -174,13 +153,7 @@ runs:
           PUSH_OK=1
 
           # xz artifact
-          "$PYTHON" -c "
-          import json
-          with open('$SHARD_DIR/vdb.meta') as f: meta = json.load(f)
-          meta['compression'] = 'xz'
-          meta['siblings']['available'] = []
-          with open('$SHARD_DIR/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
-          "
+          "$PYTHON" "$META_TOOL" stamp "$SHARD_DIR/vdb.meta" --compression xz
           (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-xz" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
@@ -192,13 +165,7 @@ runs:
 
           # zst artifact
           if (( PUSH_OK )); then
-            "$PYTHON" -c "
-            import json
-            with open('$SHARD_DIR/vdb.meta') as f: meta = json.load(f)
-            meta['compression'] = 'zst'
-            meta['siblings']['available'] = []
-            with open('$SHARD_DIR/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
-            "
+            "$PYTHON" "$META_TOOL" stamp "$SHARD_DIR/vdb.meta" --compression zst
             (cd "$SHARD_DIR" && oras push "${REPO}:${VERSION_TAG}-zst" \
               --artifact-type application/vnd.oras.config.v1+json \
               ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
@@ -224,12 +191,8 @@ runs:
 
         # ── Sibling index: assembled from what actually pushed, and ──
         # ── published LAST, after every shard it advertises ──────────
-        SIBLINGS_JSON=$(printf '%s\n' "${PUSHED_SHARDS[@]}" | "$PYTHON" -c "
-        import json, sys
-        shards = ['full'] + [l.strip() for l in sys.stdin if l.strip()]
-        print(json.dumps(shards))
-        ")
-        echo "Publishing sibling index (available: $SIBLINGS_JSON) as the FINAL step."
+        SIBLINGS=("full" "${PUSHED_SHARDS[@]}")
+        echo "Publishing sibling index (available: ${SIBLINGS[*]}) as the FINAL step."
 
         republish_manifest() {
           local dir="$1" repo="$2" suffix="$3"
@@ -241,13 +204,8 @@ runs:
             layer_ext="tar.xz"
             media_suffix="tar"
           fi
-          "$PYTHON" -c "
-          import json
-          with open('$dir/vdb.meta') as f: meta = json.load(f)
-          meta['compression'] = '$suffix'
-          meta['siblings']['available'] = json.loads('''$SIBLINGS_JSON''')
-          with open('$dir/vdb.meta', 'w') as f: json.dump(meta, f, indent=2, sort_keys=True)
-          "
+          "$PYTHON" "$META_TOOL" stamp "$dir/vdb.meta" \
+            --compression "$suffix" --siblings "${SIBLINGS[@]}"
           (cd "$dir" && oras push "${repo}:${VERSION_TAG}-${suffix}" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
