@@ -1,0 +1,19 @@
+.github/actions/build-and-upload-vdb7/action.yml
+  s_7ea0afbaea7b7a::t_bac99c0093e979 102-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "df8a1a585dd9d98580552128ac495a8470dbe8e5",
+  "prompts": {},
+  "sessions": {
+    "s_7ea0afbaea7b7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b22504da-3375-497c-81a2-b20e1e9cedea",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
