@@ -230,7 +230,14 @@ runs:
           republish_manifest "vdb_shards/$SHARD" "ghcr.io/appthreat/vdb7-$SHARD" zst
         done
 
-        echo "Split and publish complete. build_id=$BUILD_ID siblings=$SIBLINGS_JSON"
+        # ${SIBLINGS[*]}, not a SIBLINGS_JSON scalar: the sibling list has
+        # been a bash array since it started being assembled from what
+        # actually pushed. The stale name survived here and, under
+        # `set -u`, failed the step with "unbound variable" AFTER every
+        # shard had been built, gated, pushed and re-tagged — throwing away
+        # a 3h20m build over a summary line (run 32048822779). Anything
+        # after the last push is reporting: it must not be able to fail.
+        echo "Split and publish complete. build_id=$BUILD_ID siblings=${SIBLINGS[*]}"
 
         if (( GATE_RC != 0 )); then
           echo "ERROR: one or more shards FAILED the match-set gate and were not published."
