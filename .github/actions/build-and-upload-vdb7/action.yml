@@ -90,6 +90,15 @@ runs:
           export VDB_IGNORE_ALPINE=true
           export VDB_IGNORE_DEBIAN=true
           export VDB_IGNORE_ROCKYLINUX=true
+        else
+          # The SUSE and openSUSE OSV feeds are opt-in in the library, so an
+          # OS build has to ask for them explicitly or it silently publishes
+          # no SUSE data at all (~487k rows, and the only source for them
+          # now that the cvrf vuln-list tree is dropped above). Verified to
+          # ingest in ~165s for openSUSE after the start-year filter fix that
+          # made these feeds opt-in in the first place.
+          export VDB_INCLUDE_SUSE=true
+          export VDB_INCLUDE_OPENSUSE=true
         fi
 
         if [[ "${{ inputs.clean-workspace }}" == "true" ]]; then
