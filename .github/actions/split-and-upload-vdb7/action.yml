@@ -16,11 +16,11 @@ inputs:
     description: Unique build identifier shared across all artifacts from this build
     required: true
   shard-list:
-    description: Comma-separated shards to produce (must match DEFAULT_SHARDS in vulnerability-db vdb/lib/db7_split.py)
+    description: Comma-separated shards to produce. Empty (the default) lets the splitter use every shard the built DB has rows for, so the set tracks vulnerability-db instead of being restated here. Set it only to split a subset by hand.
     required: false
-    default: deb,rpm,apk,app,cpe,pypi,npm,maven,golang
+    default: ""
   enable-split:
-    description: Run the splitter (false = no-op). Only true because the per-shard match-set gate is green on the FAST fixture (all 9 shards) and on production pypi/npm; flip to false if the gate regresses.
+    description: Run the splitter (false = no-op). Only true because the per-shard match-set gate is green on the FAST fixture and on production pypi/npm; flip to false if the gate regresses.
     required: false
     default: "true"
   zstd-level:
@@ -74,7 +74,7 @@ runs:
           --db-file "$SOURCE_DB" \
           --index-file "$SOURCE_INDEX" \
           -o vdb_shards \
-          --shards "$SHARD_LIST" \
+          ${SHARD_LIST:+--shards "$SHARD_LIST"} \
           --build-id "$BUILD_ID" \
           --version-tag "$VERSION_TAG" \
           --report vdb_shards/split_report.json -v
