@@ -115,6 +115,8 @@ jobs:
           UPLOAD_RAW_VDB6: ${{ matrix.upload_raw_vdb6 }}
         run: |
           set -euo pipefail
+          chmod +x contrib/hf_upload.sh
+          hf_upload() { ./contrib/hf_upload.sh "$@"; }
           echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
           max_layer_bytes=$(( MAX_VDB_LAYER_GB * 1024 * 1024 * 1024 ))
           for repo in "$IMAGE_XZ_REPO" "$IMAGE_ZST_REPO"; do
@@ -140,9 +142,9 @@ jobs:
               exit 1
             fi
           done
-          hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.tar.xz" "$HF_REPO" "$xz_dir/data.vdb6.tar.xz" "$HF_PATH_PREFIX/data.vdb6.tar.xz"
-          hf upload --quiet --repo-type dataset "$HF_REPO" "$xz_dir/data.index.vdb6.tar.xz" "$HF_PATH_PREFIX/data.index.vdb6.tar.xz"
-          hf upload --quiet --repo-type dataset "$HF_REPO" "$xz_dir/vdb.meta" "$HF_PATH_PREFIX/vdb.meta"
+          hf_upload "$HF_REPO" "$xz_dir/data.vdb6.tar.xz" "$HF_PATH_PREFIX/data.vdb6.tar.xz" --delete "$HF_PATH_PREFIX/*.tar.xz"
+          hf_upload "$HF_REPO" "$xz_dir/data.index.vdb6.tar.xz" "$HF_PATH_PREFIX/data.index.vdb6.tar.xz"
+          hf_upload "$HF_REPO" "$xz_dir/vdb.meta" "$HF_PATH_PREFIX/vdb.meta"
           rm -rf "$xz_dir"
           df -h /tmp
 
@@ -154,16 +156,16 @@ jobs:
               exit 1
             fi
           done
-          hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.zst" "$HF_REPO" "$zst_dir/data.vdb6.zst" "$HF_PATH_PREFIX/data.vdb6.zst"
-          hf upload --quiet --repo-type dataset "$HF_REPO" "$zst_dir/data.index.vdb6.zst" "$HF_PATH_PREFIX/data.index.vdb6.zst"
+          hf_upload "$HF_REPO" "$zst_dir/data.vdb6.zst" "$HF_PATH_PREFIX/data.vdb6.zst" --delete "$HF_PATH_PREFIX/*.zst"
+          hf_upload "$HF_REPO" "$zst_dir/data.index.vdb6.zst" "$HF_PATH_PREFIX/data.index.vdb6.zst"
 
           if [[ "$UPLOAD_RAW_VDB6" == "true" ]]; then
             echo "=== Decompressing and syncing $HF_PATH_PREFIX raw vdb6 artifacts ==="
             zstd -f -d "$zst_dir/data.vdb6.zst" -o "$zst_dir/data.vdb6"
-            hf upload --quiet --repo-type dataset --delete "$HF_PATH_PREFIX/*.vdb6" "$HF_REPO" "$zst_dir/data.vdb6" "$HF_PATH_PREFIX/data.vdb6"
+            hf_upload "$HF_REPO" "$zst_dir/data.vdb6" "$HF_PATH_PREFIX/data.vdb6" --delete "$HF_PATH_PREFIX/*.vdb6"
             rm -f "$zst_dir/data.vdb6" "$zst_dir/data.vdb6.zst"
             zstd -f -d "$zst_dir/data.index.vdb6.zst" -o "$zst_dir/data.index.vdb6"
-            hf upload --quiet --repo-type dataset "$HF_REPO" "$zst_dir/data.index.vdb6" "$HF_PATH_PREFIX/data.index.vdb6"
+            hf_upload "$HF_REPO" "$zst_dir/data.index.vdb6" "$HF_PATH_PREFIX/data.index.vdb6"
             rm -f "$zst_dir/data.index.vdb6" "$zst_dir/data.index.vdb6.zst"
           else
             echo "=== Skipping raw vdb6 upload for $HF_PATH_PREFIX; removing stale raw files ==="

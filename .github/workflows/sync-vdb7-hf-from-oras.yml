@@ -1,0 +1,179 @@
+name: Sync vdb 7.0.x Hugging Face from ORAS
+"on":
+  schedule:
+    - cron: "47 5 * * *"
+  workflow_dispatch:
+    inputs:
+      artifacts:
+        description: "Comma-separated artifacts to sync (default: full, app and every shard the build published)"
+        required: false
+        default: ""
+env:
+  HF_XET_HIGH_PERFORMANCE: 1
+  HF_REPO: AppThreat/vdb
+  VDB_VERSION_TAG: v7.0.x
+  MAX_VDB_LAYER_GB: "15"
+jobs:
+  # The shard set is not fixed: vdb's splitter emits a vdb7-<type> artifact
+  # for every purl-spec type the build actually has rows for, so it grows
+  # when a new ecosystem first gets an advisory. Read the published set out
+  # of the full artifact's own vdb.meta (siblings.available) rather than
+  # hard-coding a matrix that silently stops covering new shards.
+  discover:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      artifacts: ${{ steps.list.outputs.artifacts }}
+    steps:
+      - uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d  # v2.0.1
+      - id: list
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          REQUESTED: ${{ inputs.artifacts }}
+        run: |
+          set -euo pipefail
+          echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+          if [[ -n "${REQUESTED// /}" ]]; then
+            artifacts="$(jq -cRn --arg s "$REQUESTED" '$s | split(",") | map(gsub("^\\s+|\\s+$";"")) | map(select(length > 0))')"
+          else
+            work="$(mktemp -d)"
+            oras pull "ghcr.io/appthreat/vdb7-full:${VDB_VERSION_TAG}-zst" -o "$work"
+            if [[ ! -f "$work/vdb.meta" ]]; then
+              echo "::error::vdb7-full:${VDB_VERSION_TAG}-zst carries no vdb.meta; cannot discover the shard set."
+              exit 1
+            fi
+            # "full" always first: it is the artifact the others describe.
+            artifacts="$(jq -c '["full"] + ((.siblings.available // []) - ["full"] | sort)' "$work/vdb.meta")"
+            rm -rf "$work"
+          fi
+          echo "Syncing: $artifacts"
+          if [[ "$artifacts" == "[]" ]]; then
+            echo "::error::Resolved an empty artifact list."
+            exit 1
+          fi
+          echo "artifacts=$artifacts" >> "$GITHUB_OUTPUT"
+
+  sync:
+    needs: discover
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      # A shard is an independent artifact, so one failing shard must not
+      # stop the rest; the job is re-runnable per shard.
+      max-parallel: 4
+      matrix:
+        artifact: ${{ fromJson(needs.discover.outputs.artifacts) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            contrib
+      - uses: oras-project/setup-oras@1d808f7d7f6995cc68b7bf507bfe5c5446e1dc9d  # v2.0.1
+      - name: Trim CI agent
+        shell: bash
+        run: |
+          chmod +x contrib/free_disk_space.sh
+          ./contrib/free_disk_space.sh
+      - name: Install Hugging Face CLI and zstd
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y zstd
+          hf_cli_bin_dir="${HF_CLI_BIN_DIR:-$HOME/.local/bin}"
+          curl -LsSf https://hf.co/cli/install.sh | HF_CLI_BIN_DIR="$hf_cli_bin_dir" bash
+          printf '%s\n' "$hf_cli_bin_dir" >> "$GITHUB_PATH"
+      - name: Pull ORAS artifact and upload to Hugging Face
+        shell: bash
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          ARTIFACT: ${{ matrix.artifact }}
+        run: |
+          set -euo pipefail
+          chmod +x contrib/hf_upload.sh
+          hf_upload() { ./contrib/hf_upload.sh "$@"; }
+
+          repo="appthreat/vdb7-${ARTIFACT}"
+          prefix="v7-${ARTIFACT}"
+          echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
+
+          # Corruption guard, same shape as the 6.7.x sync: a layer far
+          # larger than any real artifact means the push went wrong, and
+          # mirroring it to HF would spread the damage.
+          max_layer_bytes=$(( MAX_VDB_LAYER_GB * 1024 * 1024 * 1024 ))
+          for enc in xz zst; do
+            ref="ghcr.io/$repo:${VDB_VERSION_TAG}-${enc}"
+            biggest_layer="$(oras manifest fetch --pretty "$ref" | jq -r '[.layers[].size] | max')"
+            echo "Largest layer in $ref: ${biggest_layer:-unknown} bytes"
+            if [[ ! "$biggest_layer" =~ ^[0-9]+$ ]] || (( biggest_layer > max_layer_bytes )); then
+              echo "::error::$ref has a ${biggest_layer:-unknown}-byte layer exceeding the ${MAX_VDB_LAYER_GB}GB guard. Refusing to sync."
+              exit 1
+            fi
+          done
+
+          work_dir="$(mktemp -d)"
+          trap 'rm -rf "$work_dir"' EXIT
+
+          echo "=== Syncing $prefix tar.xz artifacts ==="
+          xz_dir="$work_dir/xz"
+          mkdir -p "$xz_dir"
+          oras pull "ghcr.io/$repo:${VDB_VERSION_TAG}-xz" -o "$xz_dir"
+          for file in vdb.meta data.vdb7.tar.xz data.index.vdb7.tar.xz; do
+            if [[ ! -f "$xz_dir/$file" ]]; then
+              echo "Missing expected ORAS artifact: $xz_dir/$file" >&2
+              exit 1
+            fi
+          done
+          hf_upload "$HF_REPO" "$xz_dir/data.vdb7.tar.xz" "$prefix/data.vdb7.tar.xz" --delete "$prefix/*.tar.xz"
+          hf_upload "$HF_REPO" "$xz_dir/data.index.vdb7.tar.xz" "$prefix/data.index.vdb7.tar.xz"
+          # vdb.meta last of the xz set: it names the siblings, so a reader
+          # that trusts it should not see it before the data it describes.
+          hf_upload "$HF_REPO" "$xz_dir/vdb.meta" "$prefix/vdb.meta"
+          rm -rf "$xz_dir"
+          df -h /tmp
+
+          echo "=== Syncing $prefix zst artifacts ==="
+          zst_dir="$work_dir/zst"
+          mkdir -p "$zst_dir"
+          oras pull "ghcr.io/$repo:${VDB_VERSION_TAG}-zst" -o "$zst_dir"
+          for file in data.vdb7.zst data.index.vdb7.zst; do
+            if [[ ! -f "$zst_dir/$file" ]]; then
+              echo "Missing expected ORAS artifact: $zst_dir/$file" >&2
+              exit 1
+            fi
+          done
+          hf_upload "$HF_REPO" "$zst_dir/data.vdb7.zst" "$prefix/data.vdb7.zst" --delete "$prefix/*.zst"
+          hf_upload "$HF_REPO" "$zst_dir/data.index.vdb7.zst" "$prefix/data.index.vdb7.zst"
+
+          # Raw .vdb7 only where it fits the runner and is worth the
+          # bandwidth: the full database decompresses to ~11GB and the deb
+          # and rpm shards to several GB each, so those stay compressed on
+          # HF and are fetched over ORAS (vdb db refresh) instead.
+          case "$ARTIFACT" in
+            full|deb|rpm|apk)
+              echo "=== Skipping raw .vdb7 upload for $prefix (too large) ==="
+              ;;
+            *)
+              echo "=== Decompressing and syncing $prefix raw .vdb7 artifacts ==="
+              zstd -f -d "$zst_dir/data.vdb7.zst" -o "$zst_dir/data.vdb7"
+              rm -f "$zst_dir/data.vdb7.zst"
+              hf_upload "$HF_REPO" "$zst_dir/data.vdb7" "$prefix/data.vdb7" --delete "$prefix/*.vdb7"
+              rm -f "$zst_dir/data.vdb7"
+              zstd -f -d "$zst_dir/data.index.vdb7.zst" -o "$zst_dir/data.index.vdb7"
+              rm -f "$zst_dir/data.index.vdb7.zst"
+              hf_upload "$HF_REPO" "$zst_dir/data.index.vdb7" "$prefix/data.index.vdb7"
+              rm -f "$zst_dir/data.index.vdb7"
+              ;;
+          esac
+          rm -rf "$zst_dir"
+          df -h /tmp
