@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   VDB_VERSION_TAG: v7.0.x
-  VDB_REF: release/7.0.x
+  VDB_REF: master
   VDB_SQLITE_JOURNAL_MODE: "off"
   HF_XET_HIGH_PERFORMANCE: 1
 jobs:
