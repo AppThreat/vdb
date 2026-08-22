@@ -70,7 +70,7 @@ runs:
           "$(dirname "$SOURCE_DB")/vdb.meta" "$BUILD_ID" --label "full artifact"
 
         # ── Split (source opened read-only; never modified) ──────────
-        "$PYTHON" -m vdb.lib.db7_split split \
+        "$PYTHON" -m vdb.lib.shard_split split \
           --db-file "$SOURCE_DB" \
           --index-file "$SOURCE_INDEX" \
           -o vdb_shards \
@@ -80,7 +80,7 @@ runs:
           --report vdb_shards/split_report.json -v
 
         # ── Round-trip: group shards must partition the full DB ──────
-        "$PYTHON" -m vdb.lib.db7_split verify \
+        "$PYTHON" -m vdb.lib.shard_split verify \
           --db-file "$SOURCE_DB" \
           --index-file "$SOURCE_INDEX" \
           --shards-root vdb_shards \
