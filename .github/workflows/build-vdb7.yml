@@ -1,8 +1,8 @@
 name: Build and Upload vdb 7.0.x
 on:
-  # Twice daily. Offset from the v6.7 (00:40/12:40) and v6.5 (08:20)
-  # self-hosted schedules so the single runner does not queue multi-hour
-  # builds — the full v7 build took 2h37m on its first run.
+  # Twice daily on GitHub-hosted agents. The full v7 build took 2h37m on its
+  # first run, so keep the offset from the v6.x self-hosted schedules to avoid
+  # competing for GHCR publish windows.
   schedule:
     - cron: "45 4,16 * * *"
   workflow_dispatch:
@@ -14,7 +14,7 @@ env:
   HF_XET_HIGH_PERFORMANCE: 1
 jobs:
   full_builder:
-    runs-on: [self-hosted-ubuntu, linux]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       packages: write
@@ -26,14 +26,11 @@ jobs:
         with:
           vulnerability-db-ref: ${{ env.VDB_REF }}
           vuln-list-path: vuln-list
+      # run-trim defaults to true, so free_disk_space.sh runs here to recover
+      # ~28 GB before the multi-GB vdb7 build and artifact packaging.
       - uses: ./.github/actions/setup-vdb-build-tools
         with:
-          setup-python: "false"
-          python-executable: python3
-          run-trim: "false"
           install-hf-cli: "false"
-          enable-break-system-packages: "true"
-          dependency-install-extra-args: --no-warn-script-location
       - name: Build and upload full db
         uses: ./.github/actions/build-and-upload-vdb7
         with:
@@ -44,7 +41,6 @@ jobs:
           upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "10"
-          python-executable: python3
           build-id: ${{ github.run_id }}-${{ github.run_attempt }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,7 +53,6 @@ jobs:
           source-index: vdb_data/data.index.vdb7
           version-tag: ${{ env.VDB_VERSION_TAG }}
           build-id: ${{ github.run_id }}-${{ github.run_attempt }}
-          python-executable: python3
         # The action logs in to GHCR with these. A composite action does not
         # inherit the job's env, so without this block `oras login` runs
         # under `set -u` with both names unset and the shard publish dies
