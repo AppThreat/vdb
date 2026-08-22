@@ -1,0 +1,20 @@
+.github/actions/split-and-upload-vdb7/action.yml
+  s_aa43ee8dbebea7::t_5dd1e029f8321a 73
+  s_aa43ee8dbebea7::t_f9759c303ed60b 83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "90b5a257aa4cc5a55ccb4e5c5386d6df5d2d702f",
+  "prompts": {},
+  "sessions": {
+    "s_aa43ee8dbebea7": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fd578edcaffesOZFWPEgLMpj56",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
