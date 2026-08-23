@@ -188,10 +188,6 @@ runs:
         "
 
         # ── Compression ──────────────────────────────────────────────
-        # FIX: the v6 action ran `zstd --ultra` which only UNLOCKS levels
-        # above 19 but does not select one — zstd defaults to level 3.
-        # Every published .zst was ~32% larger than necessary.
-        # The v7 action passes an explicit level.
         XZ_THREADS="$(nproc 2>/dev/null || echo 2)"
         if (( XZ_THREADS > 4 )); then
           XZ_THREADS=4
@@ -200,9 +196,9 @@ runs:
         tar -cf - data.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.vdb7.tar.xz
         tar -cf - data.index.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb7.tar.xz
 
-        echo "Creating .tar.zst artifacts with zstd level ${ZSTD_LEVEL} --ultra"
-        zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb7 -f
-        zstd -"${ZSTD_LEVEL}" --ultra data.vdb7 -f
+        echo "Creating .tar.zst artifacts with zstd level ${ZSTD_LEVEL} --ultra, $(nproc) thread(s)"
+        zstd -"${ZSTD_LEVEL}" --ultra -T0 data.index.vdb7 -f
+        zstd -"${ZSTD_LEVEL}" --ultra -T0 data.vdb7 -f
 
         echo "$GITHUB_TOKEN" | oras login ghcr.io -u "$GITHUB_USERNAME" --password-stdin
 

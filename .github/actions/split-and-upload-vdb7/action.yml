@@ -143,12 +143,12 @@ runs:
           "$PYTHON" "$META_TOOL" check-build-id \
             "$SHARD_DIR/vdb.meta" "$BUILD_ID" --label "shard $SHARD"
 
-          echo "Compressing shard $SHARD (xz -7, ${XZ_THREADS} thread(s); zstd -${ZSTD_LEVEL} --ultra)"
+          echo "Compressing shard $SHARD (xz -7, ${XZ_THREADS} thread(s); zstd -${ZSTD_LEVEL} --ultra -T0)"
           (cd "$SHARD_DIR" \
             && tar -cf - data.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.vdb7.tar.xz \
             && tar -cf - data.index.vdb7 | xz -7 -T"$XZ_THREADS" -c > data.index.vdb7.tar.xz \
-            && zstd -"${ZSTD_LEVEL}" --ultra data.index.vdb7 -f \
-            && zstd -"${ZSTD_LEVEL}" --ultra data.vdb7 -f)
+            && zstd -"${ZSTD_LEVEL}" --ultra -T0 data.index.vdb7 -f \
+            && zstd -"${ZSTD_LEVEL}" --ultra -T0 data.vdb7 -f)
 
           PUSH_OK=1
 
