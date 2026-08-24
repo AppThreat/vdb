@@ -65,7 +65,17 @@ jobs:
         # every shard failed to publish, and it cannot protect anything: the
         # full artifact was already pushed by the previous step, so a red job
         # only reports what actually happened.
-  app_builder:
+  # Publishes vdb7-app-ONLY, not vdb7-app. vdb7-app is owned by the
+  # splitter above: "app" is one of shard_split's group shards
+  # (vdb/lib/shard_split.py, group_shards), so full_builder pushes
+  # ghcr.io/appthreat/vdb7-app:<tag> as a completeness=partial slice of the
+  # full database. This job builds something different — a standalone
+  # app-scope database from an app-only ingest — and publishing it to the
+  # same repo:tag made the two jobs race every build, leaving vdb7-app's
+  # contents and its completeness flag decided by whichever finished last.
+  # They are separate repos now: vdb7-app = shard-store member,
+  # vdb7-app-only = complete database, installable as the main DB.
+  app_only_builder:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -93,13 +103,165 @@ jobs:
         uses: ./.github/actions/build-and-upload-vdb7
         with:
           vuln-list-path: vuln-list
-          shard-name: app
+          shard-name: app-only
+          artifact-kind: "full"
           version-tag: ${{ env.VDB_VERSION_TAG }}
-          hf-path-prefix: v7-app
+          hf-path-prefix: v7-app-only
           upload-to-hf: "false"
           nvd-start-year: "2020"
           github-page-count: "30"
           app-only-mode: "true"
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+  # The extended and 10y variants mirror the 6.7.x line (vdbxz-app-extended,
+  # vdbxz-app-10y, vdbxz-app-10y-extended) on the v7 format and naming:
+  # vdb7-app-extended (2020+, metadata tables pre-populated), vdb7-app-10y
+  # (2016+), vdb7-app-10y-extended (2016+, metadata). They are complete
+  # databases for their feed scope, so artifact-kind: "full" is load-bearing:
+  # published as completeness=full they install via
+  #   vdb db refresh full --image ghcr.io/appthreat/vdb7-app-extended:v7.0.x-xz
+  # while the shard store path stays reserved for the splitter's per-type
+  # shards. Feed difference vs vdb7-app-only: extended adds
+  # --include-metadata; 10y widens NVD_START_YEAR to 2016 (hence the wider
+  # sparse checkout).
+  app_extended_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+      - name: Build and upload extended app db - 2020
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: app-extended
+          artifact-kind: "full"
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-app-extended
+          upload-to-hf: "false"
+          nvd-start-year: "2020"
+          github-page-count: "30"
+          app-only-mode: "true"
+          include-metadata: "true"
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+  # One database per job, one runner each. These were a single job running
+  # both builds back to back, which serialized two 2016+ app ingests behind
+  # GitHub's 6-hour job limit — and the v7 full build alone took 2h37m. A
+  # timeout there would also have failed the job AFTER the first database
+  # had already been pushed, the green-looking-failure mode full_builder
+  # warns about. Nothing is shared between the two, so the only cost of
+  # separating them is a second checkout.
+  app_10y_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2016
+            nvd/2017
+            nvd/2018
+            nvd/2019
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+      - name: Build and upload app db - 2016
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: app-10y
+          artifact-kind: "full"
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-app-10y
+          upload-to-hf: "false"
+          nvd-start-year: "2016"
+          github-page-count: "30"
+          app-only-mode: "true"
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
+  app_10y_extended_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+          vuln-list-sparse-checkout: |
+            nvd/2016
+            nvd/2017
+            nvd/2018
+            nvd/2019
+            nvd/2020
+            nvd/2021
+            nvd/2022
+            nvd/2023
+            nvd/2024
+            nvd/2025
+            nvd/2026
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+      - name: Build and upload extended app db - 2016
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: app-10y-extended
+          artifact-kind: "full"
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-app-10y-extended
+          upload-to-hf: "false"
+          nvd-start-year: "2016"
+          github-page-count: "30"
+          app-only-mode: "true"
+          include-metadata: "true"
           build-id: ${{ github.run_id }}-${{ github.run_attempt }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

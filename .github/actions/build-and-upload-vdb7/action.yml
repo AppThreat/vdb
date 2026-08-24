@@ -9,6 +9,17 @@ inputs:
     description: Shard name used in the GHCR repo suffix and manifest artifact.name (e.g. full, app, pypi)
     required: false
     default: full
+  artifact-kind:
+    description: >-
+      How vdb.meta marks the artifact. "full" publishes completeness=full,
+      installable as the main DB via 'vdb db refresh full --image'; "shard"
+      publishes completeness=partial for the shard store; "auto" (default)
+      picks full only when shard-name is "full". Standalone scope variants
+      (app-only, app-extended, app-10y) must pass "full" - they are databases
+      for their feed scope, not store shards, and the refresh-full validation
+      rejects completeness=partial images.
+    required: false
+    default: "auto"
   shard-types:
     description: Comma-separated purl types this shard serves (e.g. "pypi,npm"). Empty for full.
     required: false
@@ -75,9 +86,16 @@ runs:
         BUILD_ID: ${{ inputs.build-id }}
         SHARD_NAME: ${{ inputs.shard-name }}
         SHARD_TYPES: ${{ inputs.shard-types }}
+        ARTIFACT_KIND: ${{ inputs.artifact-kind }}
         VERSION_TAG: ${{ inputs.version-tag }}
       run: |
         set -euo pipefail
+
+        # Shared manifest helper, resolved to an absolute path NOW: this
+        # step cds into vdb_data later, and the sibling-index loop would
+        # otherwise need a relative path that changes under it. See the
+        # script's docstring for why none of this is inline python -c.
+        META_TOOL="$(cd "$GITHUB_ACTION_PATH/../../scripts" && pwd)/vdb7_meta.py"
 
         export VDB_HOME=vdb_data
         export VDB_CACHE=vdb_cache
@@ -153,39 +171,14 @@ runs:
         cd vdb_data
 
         # ── Manifest v2 ──────────────────────────────────────────────
-        # Enhance vdb.meta with v2 fields while keeping every existing key
-        # so v6 readers still parse it. build_id is identical across every
-        # artifact from this build — the multi-sync safety key.
-        ${{ inputs.python-executable }} -c "
-        import json, os
-        meta_path = 'vdb.meta'
-        with open(meta_path) as f:
-            meta = json.load(f)
-        shard_types = [t.strip() for t in os.environ.get('SHARD_TYPES', '').split(',') if t.strip()]
-        is_full = os.environ.get('SHARD_NAME', 'full') == 'full'
-        meta['meta_version'] = 2
-        meta['build_id'] = os.environ['BUILD_ID']
-        meta['schema_version'] = 6
-        meta['artifact'] = {
-            'kind': 'full' if is_full else 'shard',
-            'name': os.environ.get('SHARD_NAME', 'full'),
-            'types': shard_types if shard_types else [],
-        }
-        meta['completeness'] = 'full' if is_full else 'partial'
-        meta['compression'] = 'PLACEHOLDER'
-        meta['siblings'] = {
-            'registry': 'ghcr.io/appthreat',
-            'tag': os.environ.get('VERSION_TAG', ''),
-            # Empty at push time. The sibling index is assembled from what
-            # ACTUALLY pushed and published LAST, after every artifact it
-            # advertises (doc 08 §7.4) — a manifest must never advertise an
-            # artifact that failed to push. split-and-upload-vdb7 extends
-            # this list with the shards it publishes.
-            'available': [],
-        }
-        with open(meta_path, 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        "
+        # Upgrade vdb.meta in place; see vdb7_meta.py's `init` docstring for
+        # what the fields mean and why artifact-kind is load-bearing.
+        "${{ inputs.python-executable }}" "$META_TOOL" init vdb.meta \
+          --build-id "$BUILD_ID" \
+          --shard-name "$SHARD_NAME" \
+          --kind "${ARTIFACT_KIND:-auto}" \
+          --types "$SHARD_TYPES" \
+          --version-tag "$VERSION_TAG"
 
         # ── Compression ──────────────────────────────────────────────
         XZ_THREADS="$(nproc 2>/dev/null || echo 2)"
@@ -207,15 +200,8 @@ runs:
 
         # ── Push xz artifact ─────────────────────────────────────────
         # Patch meta for xz. siblings.available stays empty until the
-        # finalization step after every push.
-        ${{ inputs.python-executable }} -c "
-        import json
-        with open('vdb.meta') as f:
-            meta = json.load(f)
-        meta['compression'] = 'xz'
-        with open('vdb.meta', 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        "
+        # finalization step after every push (stamp with no --siblings).
+        "${{ inputs.python-executable }}" "$META_TOOL" stamp vdb.meta --compression xz
 
         oras push "${XZ_REPO}:${VERSION_TAG}-xz" \
           --artifact-type application/vnd.oras.config.v1+json \
@@ -232,14 +218,7 @@ runs:
 
         # ── Push zst artifact ────────────────────────────────────────
         # Patch meta for zst
-        ${{ inputs.python-executable }} -c "
-        import json
-        with open('vdb.meta') as f:
-            meta = json.load(f)
-        meta['compression'] = 'zst'
-        with open('vdb.meta', 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        "
+        "${{ inputs.python-executable }}" "$META_TOOL" stamp vdb.meta --compression zst
 
         oras push "${ZST_REPO}:${VERSION_TAG}-zst" \
           --artifact-type application/vnd.oras.config.v1+json \
@@ -264,19 +243,12 @@ runs:
         # split-and-upload-vdb7, re-publishing manifests again as their
         # final step. Layer blobs are content-addressed and already in the
         # registry, so these re-pushes upload only the config + manifest.
-        ${{ inputs.python-executable }} -c "
-        import json
-        with open('vdb.meta') as f:
-            meta = json.load(f)
-        meta['compression'] = 'xz'
-        meta['siblings']['available'] = ['full']
-        with open('vdb.meta.xz', 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        meta['compression'] = 'zst'
-        with open('vdb.meta.zst', 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        "
-
+        #
+        # The list is SHARD_NAME, not a hard-coded 'full'. For the full
+        # build the two are the same string, but for any other artifact the
+        # literal was a lie: vdb7-app-10y-extended shipped a manifest
+        # claiming its sibling set is ['full'], pointing a consumer who
+        # installed it as their main database at an unrelated build.
         for ENC in xz zst; do
           LAYER_EXT="tar.xz"
           MEDIA_SUFFIX="tar"
@@ -284,7 +256,8 @@ runs:
             LAYER_EXT="zst"
             MEDIA_SUFFIX="zst"
           fi
-          cp "vdb.meta.$ENC" vdb.meta
+          "${{ inputs.python-executable }}" "$META_TOOL" stamp vdb.meta \
+            --compression "$ENC" --siblings "$SHARD_NAME"
           oras push "ghcr.io/appthreat/vdb7-${SHARD_NAME}:${VERSION_TAG}-${ENC}" \
             --artifact-type application/vnd.oras.config.v1+json \
             ./vdb.meta:application/vnd.appthreat.vdb.config.v1+json \
@@ -294,15 +267,10 @@ runs:
           # above minted a new digest, and v7-*/latest-* still resolve to
           # the earlier manifest carrying siblings.available = [].
           oras tag "ghcr.io/appthreat/vdb7-${SHARD_NAME}:${VERSION_TAG}-${ENC}" "v7-${ENC}" "latest-${ENC}"
-          rm -f "vdb.meta.$ENC"
         done
-        # Restore the on-disk meta to the canonical uncompressed form.
-        ${{ inputs.python-executable }} -c "
-        import json
-        with open('vdb.meta') as f:
-            meta = json.load(f)
-        meta['compression'] = 'none'
-        meta['siblings']['available'] = ['full']
-        with open('vdb.meta', 'w') as f:
-            json.dump(meta, f, indent=2, sort_keys=True)
-        "
+
+        # Restore the on-disk meta to the canonical uncompressed form. The
+        # full build's copy is what split-and-upload-vdb7 reads next, so it
+        # must match what was published, SHARD_NAME included.
+        "${{ inputs.python-executable }}" "$META_TOOL" stamp vdb.meta \
+          --compression none --siblings "$SHARD_NAME"

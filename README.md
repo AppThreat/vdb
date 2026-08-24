@@ -47,6 +47,54 @@ tar -xvf *.tar.xz
 rm *.tar.xz
 ```
 
+## VDB 7 images
+
+`build-vdb7.yml` publishes two kinds of artifact, and the difference decides
+how you consume them.
+
+**Complete databases** (`completeness=full`) — install as the main database:
+
+| Image                                     | Scope                                  | Job                        |
+| :---------------------------------------- | :------------------------------------- | :------------------------- |
+| `ghcr.io/appthreat/vdb7-full`             | app + OS, everything incl. CPE         | `full_builder`             |
+| `ghcr.io/appthreat/vdb7-app-only`         | app ecosystems, 2020+                  | `app_only_builder`         |
+| `ghcr.io/appthreat/vdb7-app-extended`     | app ecosystems, 2020+, metadata tables | `app_extended_builder`     |
+| `ghcr.io/appthreat/vdb7-app-10y`          | app ecosystems, 2016+                  | `app_10y_builder`          |
+| `ghcr.io/appthreat/vdb7-app-10y-extended` | app ecosystems, 2016+, metadata tables | `app_10y_extended_builder` |
+
+```bash
+vdb db refresh full --app-only   # vdb7-app-only, the CLI default
+vdb db refresh full --image ghcr.io/appthreat/vdb7-app-10y-extended:v7.0.x-xz
+```
+
+**Shards** (`completeness=partial`) — for the shard store only, placed with
+`vdb db refresh <shard>`: `vdb7-deb`, `vdb7-rpm`, `vdb7-apk`, `vdb7-app`,
+`vdb7-cpe` and one per purl type, all emitted by the `full_builder` job's
+splitter. `vdb db refresh full` rejects them by design.
+
+`vdb7-app` and `vdb7-app-only` are therefore different artifacts: the first is
+a slice of the full database, the second a database built from an app-only
+ingest. They used to share the `vdb7-app` repo and tag, which meant two jobs
+raced every build and whichever finished last decided what `vdb7-app`
+contained. Do not merge them back.
+
+Tags follow the v7 convention: `v7.0.x-xz` / `v7.0.x-zst` for the pinned
+release line and `v7-xz` / `latest-xz` (and zst equivalents) for the newest
+build. Nothing publishes a bare `v7.0.x`. Every artifact is mirrored to the
+Hugging Face dataset by `sync-vdb7-hf-from-oras.yml` under `v7-<name>/`;
+`full`, `deb`, `rpm`, `apk` and the two `app-10y` variants are mirrored
+compressed only, the rest also as raw `.vdb7`.
+
+The 6.7.x line additionally publishes `-2y` and OS-inclusive `-extended` /
+`-10y` images. Those have no v7 equivalent yet.
+
+### Workflow scripts
+
+Manifest handling lives in `.github/scripts/vdb7_meta.py`, shared by
+`build-and-upload-vdb7` and `split-and-upload-vdb7`, rather than in inline
+`python -c` blocks — see the script's docstring for the indentation and
+quoting failures that motivated it.
+
 dep-scan would automatically use this database for all the scans using the environment variable `VDB_HOME`.
 
 ## Private on-premise registry

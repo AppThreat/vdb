@@ -49,6 +49,24 @@ jobs:
             # "full" always first: it is the artifact the others describe.
             artifacts="$(jq -c '["full"] + ((.siblings.available // []) - ["full"] | sort)' "$work/vdb.meta")"
             rm -rf "$work"
+            # Scope variants (app-only, app-extended, app-10y,
+            # app-10y-extended) are complete databases built by their own
+            # jobs, not shards of the full build, so siblings.available
+            # never names them. Add the ones that actually exist in the
+            # registry, so the sync stays green before a variant's first
+            # publish and after any job removal, instead of hard-coding a
+            # list that can 404.
+            #
+            # Appended, never re-sorted: sorting the combined list would put
+            # app-* ahead of "full" and break the ordering the branch above
+            # deliberately establishes.
+            for variant in app-only app-extended app-10y app-10y-extended; do
+              if oras manifest fetch "ghcr.io/appthreat/vdb7-${variant}:${VDB_VERSION_TAG}-zst" >/dev/null 2>&1; then
+                artifacts="$(jq -c --arg v "$variant" '. + [$v]' <<<"$artifacts")"
+              else
+                echo "Skipping $variant: ghcr.io/appthreat/vdb7-${variant}:${VDB_VERSION_TAG}-zst not found yet."
+              fi
+            done
           fi
           echo "Syncing: $artifacts"
           if [[ "$artifacts" == "[]" ]]; then
@@ -158,9 +176,13 @@ jobs:
           # Raw .vdb7 only where it fits the runner and is worth the
           # bandwidth: the full database decompresses to ~11GB and the deb
           # and rpm shards to several GB each, so those stay compressed on
-          # HF and are fetched over ORAS (vdb db refresh) instead.
+          # HF and are fetched over ORAS (vdb db refresh) instead. The 10y
+          # variants belong in that group too — a 2016+ app database, with
+          # metadata tables in the -extended case, is multi-GB raw, and it
+          # would land in the same /tmp that already holds this artifact's
+          # xz and zst copies.
           case "$ARTIFACT" in
-            full|deb|rpm|apk)
+            full|deb|rpm|apk|app-10y|app-10y-extended)
               echo "=== Skipping raw .vdb7 upload for $prefix (too large) ==="
               ;;
             *)

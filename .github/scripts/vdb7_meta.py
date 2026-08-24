@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Manifest and report helpers for the split-and-upload-vdb7 action.
+"""Manifest and report helpers for the vdb7 build and split actions.
+
+Shared by build-and-upload-vdb7 and split-and-upload-vdb7, which is why it
+lives in .github/scripts rather than beside one action. Both resolve it to
+an absolute path before they start changing directories.
 
 These used to be inline ``python -c "..."`` snippets in action.yml. A YAML
 block scalar strips only the indentation common to the whole ``run:`` body,
@@ -31,6 +35,49 @@ def _load(path):
 def _write(path, meta):
     with open(path, "w") as f:
         json.dump(meta, f, indent=2, sort_keys=True)
+
+
+def init(args):
+    """Upgrade a freshly built vdb.meta to manifest v2, in place.
+
+    Every existing key survives, so v6 readers still parse the result.
+    ``build_id`` is identical across every artifact of one build — the
+    multi-sync safety key (doc 08 §5/§7.1).
+
+    ``--kind`` decides which consumption path the artifact supports, and
+    the two are mutually exclusive: 'vdb db refresh full' rejects
+    completeness=partial (db_cmd._validate_staged_full_db) and the shard
+    store rejects anything that is not partial (shard_store). 'auto' keeps
+    the original rule — only the artifact named "full" is a complete
+    database — while an explicit 'full' lets a scoped build (app-only,
+    app-extended, app-10y) publish a database installable as the main DB.
+
+    ``siblings.available`` starts empty on purpose: siblings are advertised
+    only once every artifact they name has actually pushed (doc 08 §7.4),
+    which is what the ``stamp`` calls after the pushes are for.
+    """
+    meta = _load(args.meta)
+    kind = args.kind
+    if kind == "auto":
+        kind = "full" if args.shard_name == "full" else "shard"
+    types = [t.strip() for t in args.types.split(",") if t.strip()]
+    meta["meta_version"] = 2
+    meta["build_id"] = args.build_id
+    meta["schema_version"] = 6
+    meta["artifact"] = {"kind": kind, "name": args.shard_name, "types": types}
+    meta["completeness"] = "full" if kind == "full" else "partial"
+    meta["compression"] = "PLACEHOLDER"
+    meta["siblings"] = {
+        "registry": args.registry,
+        "tag": args.version_tag,
+        "available": [],
+    }
+    _write(args.meta, meta)
+    print(
+        f"manifest v2: name={args.shard_name} kind={kind} "
+        f"completeness={meta['completeness']} types={types or '[]'}"
+    )
+    return 0
 
 
 def check_build_id(args):
@@ -91,6 +138,16 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="cmd", required=True)
 
+    p = sub.add_parser("init")
+    p.add_argument("meta")
+    p.add_argument("--build-id", required=True)
+    p.add_argument("--shard-name", default="full")
+    p.add_argument("--kind", default="auto", choices=("auto", "full", "shard"))
+    p.add_argument("--types", default="")
+    p.add_argument("--version-tag", default="")
+    p.add_argument("--registry", default="ghcr.io/appthreat")
+    p.set_defaults(func=init)
+
     p = sub.add_parser("check-build-id")
     p.add_argument("meta")
     p.add_argument("build_id")
@@ -104,7 +161,9 @@ def main(argv=None):
 
     p = sub.add_parser("stamp")
     p.add_argument("meta")
-    p.add_argument("--compression", required=True, choices=("xz", "zst"))
+    # "none" is the canonical value for the uncompressed on-disk copy the
+    # build action leaves behind for split-and-upload-vdb7 to read.
+    p.add_argument("--compression", required=True, choices=("xz", "zst", "none"))
     p.add_argument("--siblings", nargs="*", default=[])
     p.set_defaults(func=stamp)
 

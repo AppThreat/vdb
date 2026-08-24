@@ -51,11 +51,11 @@ runs:
         set -euo pipefail
 
         # Helper for the JSON steps (meta stamping, build_id preflight,
-        # gate triage), shared with build-and-upload-vdb7. Inline
-        # `python -c` blocks cannot work here: a YAML block scalar cannot
-        # dedent them to column 0 and Python rejects an indented first
-        # statement.
-        META_TOOL="$GITHUB_ACTION_PATH/vdb7_meta.py"
+        # gate triage), shared with build-and-upload-vdb7 and therefore
+        # kept in .github/scripts. Inline `python -c` blocks cannot work
+        # here: a YAML block scalar cannot dedent them to column 0 and
+        # Python rejects an indented first statement.
+        META_TOOL="$(cd "$GITHUB_ACTION_PATH/../../scripts" && pwd)/vdb7_meta.py"
 
         if [[ "${{ inputs.enable-split }}" != "true" ]]; then
           echo "enable-split=false: skipping shard split and upload."
