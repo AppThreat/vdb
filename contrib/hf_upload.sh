@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Upload one file to a Hugging Face dataset, retrying transient failures.
+# Upload a file or folder to a Hugging Face dataset, retrying transient failures.
 #
 # Why this exists: `hf upload` of a multi-GB file fails intermittently inside
 # the xet transfer layer — the observed failure is
@@ -15,6 +15,12 @@
 # persistent xet-side problem still completes over plain HTTP LFS rather
 # than failing the run.
 #
+# <local-path> may be a file or a directory. A directory is uploaded under
+# <remote-path> as a single commit — the Hub caps a repository at 128
+# commits/hour, so multi-file sets must go up as one folder, not file by
+# file. --delete patterns are honored only for folder uploads and are
+# matched against repo paths relative to <remote-path>.
+#
 # Usage: hf_upload.sh <repo> <local-path> <remote-path> [extra hf args...]
 set -euo pipefail
 
@@ -26,12 +32,16 @@ shift 3
 attempts="${HF_UPLOAD_ATTEMPTS:-4}"
 delay="${HF_UPLOAD_RETRY_DELAY:-30}"
 
-if [[ ! -f "$local_path" ]]; then
-  echo "hf_upload: no such file: $local_path" >&2
+if [[ ! -e "$local_path" ]]; then
+  echo "hf_upload: no such file or folder: $local_path" >&2
   exit 1
 fi
 
-size="$(du -h "$local_path" | cut -f1)"
+if [[ -d "$local_path" ]]; then
+  size="$(du -sh "$local_path" | cut -f1), $(find "$local_path" -type f | wc -l | tr -d ' ') files"
+else
+  size="$(du -h "$local_path" | cut -f1)"
+fi
 for attempt in $(seq 1 "$attempts"); do
   # Final attempt: take xet out of the picture.
   if (( attempt == attempts )); then

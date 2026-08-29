@@ -142,6 +142,13 @@ jobs:
           work_dir="$(mktemp -d)"
           trap 'rm -rf "$work_dir"' EXIT
 
+          # One folder upload per compression set = one HF commit per set
+          # (2 per artifact instead of 7). The Hub caps a repository at
+          # 128 commits/hour; the old one-file-per-commit flow spent ~200
+          # commits across the ~30-artifact matrix and was 429-limited
+          # mid-run. Folder commits also make --delete effective — it is
+          # ignored for single-file uploads, so the stale-file pruning the
+          # old calls requested never ran.
           echo "=== Syncing $prefix tar.xz artifacts ==="
           xz_dir="$work_dir/xz"
           mkdir -p "$xz_dir"
@@ -152,11 +159,13 @@ jobs:
               exit 1
             fi
           done
-          hf_upload "$HF_REPO" "$xz_dir/data.vdb7.tar.xz" "$prefix/data.vdb7.tar.xz" --delete "$prefix/*.tar.xz"
-          hf_upload "$HF_REPO" "$xz_dir/data.index.vdb7.tar.xz" "$prefix/data.index.vdb7.tar.xz"
-          # vdb.meta last of the xz set: it names the siblings, so a reader
-          # that trusts it should not see it before the data it describes.
-          hf_upload "$HF_REPO" "$xz_dir/vdb.meta" "$prefix/vdb.meta"
+          ls -lh "$xz_dir"
+          # Single commit: vdb.meta names the siblings, so it must never
+          # be visible without the data it describes — atomic, not merely
+          # uploaded last. --delete patterns match repo paths relative to
+          # $prefix and only consider files under it, so this prunes
+          # stale .tar.xz files without touching anything else.
+          hf_upload "$HF_REPO" "$xz_dir" "$prefix" --delete "*.tar.xz"
           rm -rf "$xz_dir"
           df -h /tmp
 
@@ -170,8 +179,6 @@ jobs:
               exit 1
             fi
           done
-          hf_upload "$HF_REPO" "$zst_dir/data.vdb7.zst" "$prefix/data.vdb7.zst" --delete "$prefix/*.zst"
-          hf_upload "$HF_REPO" "$zst_dir/data.index.vdb7.zst" "$prefix/data.index.vdb7.zst"
 
           # Raw .vdb7 only where it fits the runner and is worth the
           # bandwidth: the full database decompresses to ~11GB and the deb
@@ -188,14 +195,13 @@ jobs:
             *)
               echo "=== Decompressing and syncing $prefix raw .vdb7 artifacts ==="
               zstd -f -d "$zst_dir/data.vdb7.zst" -o "$zst_dir/data.vdb7"
-              rm -f "$zst_dir/data.vdb7.zst"
-              hf_upload "$HF_REPO" "$zst_dir/data.vdb7" "$prefix/data.vdb7" --delete "$prefix/*.vdb7"
-              rm -f "$zst_dir/data.vdb7"
               zstd -f -d "$zst_dir/data.index.vdb7.zst" -o "$zst_dir/data.index.vdb7"
-              rm -f "$zst_dir/data.index.vdb7.zst"
-              hf_upload "$HF_REPO" "$zst_dir/data.index.vdb7" "$prefix/data.index.vdb7"
-              rm -f "$zst_dir/data.index.vdb7"
               ;;
           esac
+          ls -lh "$zst_dir"
+          # '*.vdb7' prunes raw files left behind on variants that skip
+          # them; it cannot match the .zst uploads themselves since fnmatch
+          # anchors the suffix (and uploaded files are never deleted).
+          hf_upload "$HF_REPO" "$zst_dir" "$prefix" --delete "*.zst" "*.vdb7"
           rm -rf "$zst_dir"
           df -h /tmp
