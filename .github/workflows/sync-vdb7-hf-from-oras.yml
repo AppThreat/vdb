@@ -199,9 +199,12 @@ jobs:
               ;;
           esac
           ls -lh "$zst_dir"
-          # '*.vdb7' prunes raw files left behind on variants that skip
-          # them; it cannot match the .zst uploads themselves since fnmatch
-          # anchors the suffix (and uploaded files are never deleted).
-          hf_upload "$HF_REPO" "$zst_dir" "$prefix" --delete "*.zst" "*.vdb7"
+          # --delete takes exactly one pattern; a second value would be
+          # parsed as a positional arg and fail the upload. '*.vdb7'
+          # prunes raw files left behind on variants that skip them; it
+          # cannot match the .zst uploads since fnmatch anchors the
+          # suffix, and files uploaded in the same commit are never
+          # deleted.
+          hf_upload "$HF_REPO" "$zst_dir" "$prefix" --delete "*.vdb7"
           rm -rf "$zst_dir"
           df -h /tmp
