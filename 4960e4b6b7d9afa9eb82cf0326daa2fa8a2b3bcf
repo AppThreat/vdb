@@ -1,0 +1,19 @@
+.github/workflows/sync-vdb67-hf-from-oras.yml
+  s_e165bebb4a3476::t_7c84f899447d73 10,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,86-96,115,119-128,133-135,137-149,151-153,157-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4960e4b6b7d9afa9eb82cf0326daa2fa8a2b3bcf",
+  "prompts": {},
+  "sessions": {
+    "s_e165bebb4a3476": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff366df64ffeq6DomI6ODfQemn",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

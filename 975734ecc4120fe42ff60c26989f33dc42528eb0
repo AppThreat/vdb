@@ -1,0 +1,23 @@
+.github/actions/split-and-upload-vdb7/action.yml
+  s_aabd7bce4d2e4b::t_5ef5ce03723bc5 6,9,158-161,176-177,194-195,243-244
+.github/actions/build-and-upload-vdb7/action.yml
+  s_aabd7bce4d2e4b::t_5ef5ce03723bc5 177-178,181-182,204-205,210-211,228-229,234-237,272-273
+.github/workflows/build-vdb7.yml
+  s_aabd7bce4d2e4b::t_5ef5ce03723bc5 57-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "975734ecc4120fe42ff60c26989f33dc42528eb0",
+  "prompts": {},
+  "sessions": {
+    "s_aabd7bce4d2e4b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff5bd510effeYDsbqJ2XQLW8d1",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

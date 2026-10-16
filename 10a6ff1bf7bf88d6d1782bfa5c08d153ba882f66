@@ -1,0 +1,19 @@
+.github/workflows/build-vdb7.yml
+  s_7ea0afbaea7b7a::t_6299c7ecd1002a 3-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "10a6ff1bf7bf88d6d1782bfa5c08d153ba882f66",
+  "prompts": {},
+  "sessions": {
+    "s_7ea0afbaea7b7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b22504da-3375-497c-81a2-b20e1e9cedea",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

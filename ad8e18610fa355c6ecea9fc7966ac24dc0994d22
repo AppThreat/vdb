@@ -1,0 +1,62 @@
+.github/scripts/vdb7_meta.py
+  s_39c99d27c0c83f::t_05756b4c45a37a 141-150,152,163
+  s_39c99d27c0c83f::t_bff408957e17d1 164-166
+  s_39c99d27c0c83f::t_699c55d5c5f347 2-6
+  s_39c99d27c0c83f::t_12e208d2452807 40-82,85,94,102,119,129-130,133-134
+.github/actions/build-and-upload-vdb7/action.yml
+  s_3b3d8d73fa7861::t_bc6a20602dcdea 89
+  s_3b3d8d73fa7861::t_8adefa598e46bb 13-17,19-20
+  s_39c99d27c0c83f::t_a807618c026e0b 94-99
+  s_3b3d8d73fa7861::t_e7af1f21638334 12,21-22
+  s_39c99d27c0c83f::t_b1ff84af8e2686 272-274
+  s_39c99d27c0c83f::t_d6abe9bd825460 18
+  s_39c99d27c0c83f::t_23d0d7b20521b8 246,248,250-251
+  s_39c99d27c0c83f::t_c0d521184807c4 247
+  s_39c99d27c0c83f::t_38a54bcf2a8b14 249
+  s_39c99d27c0c83f::t_7c6ad5acf8fd28 271
+  s_39c99d27c0c83f::t_0f4c1ee22bee34 275-276
+  s_39c99d27c0c83f::t_f00eca611329cb 174-181,203-204,221,259-260
+README.md
+  s_3b3d8d73fa7861::t_f9ac8b1346f250 50-72
+  s_39c99d27c0c83f::t_5e46918b7a4e01 73-97
+.github/actions/split-and-upload-vdb7/action.yml
+  s_39c99d27c0c83f::t_c34ca631866a52 54-58
+.github/workflows/build-vdb7.yml
+  s_39c99d27c0c83f::t_dd57bc74aae025 68-78
+  s_39c99d27c0c83f::t_9c8c476324086e 127-129
+  s_3b3d8d73fa7861::t_fa2c863b31d659 107,119-126,130-171,179-223,231-234,236-248,250-269
+  s_3b3d8d73fa7861::t_c74ef43871f5e3 106
+  s_3b3d8d73fa7861::t_5b9365b909ee51 172-174,176-178
+  s_3b3d8d73fa7861::t_447977d8e66552 224-226,228-230
+  s_3b3d8d73fa7861::t_dbd55e2f2df7ab 235
+  s_3b3d8d73fa7861::t_041275daec611d 249
+  s_39c99d27c0c83f::t_2873c1d81e5c58 109,175,227
+.github/workflows/sync-vdb7-hf-from-oras.yml
+  s_3b3d8d73fa7861::t_fe6236a0f32f9a 64,66-69
+  s_39c99d27c0c83f::t_c3cd7e67fca904 52-63,65
+  s_39c99d27c0c83f::t_ff90a2c1566111 179-183,185
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ad8e18610fa355c6ecea9fc7966ac24dc0994d22",
+  "prompts": {},
+  "sessions": {
+    "s_39c99d27c0c83f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "09c3e0c4-96c2-4777-aa9b-32795c32cc4c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    },
+    "s_3b3d8d73fa7861": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fccee1588ffeWOiMEGmL1pjy4t",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

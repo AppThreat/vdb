@@ -1,0 +1,29 @@
+.github/actions/split-and-upload-vdb7/action.yml
+  s_fb30ca5f4b239a::t_23bf6cb203ad7f 47-49
+  s_fb30ca5f4b239a::t_1b44a65c832a9a 140
+  s_fb30ca5f4b239a::t_89af9bd5503721 228
+  s_fb30ca5f4b239a::t_19122ba334a643 2,18-29,42-46,53-139,141-203,205-224,233-242,245-264
+  s_fb30ca5f4b239a::t_e40e4d172c6e3f 265-270
+  s_fb30ca5f4b239a::t_2964b47e8dce58 225-227,229-232,243-244
+  s_fb30ca5f4b239a::t_3acf210d6fc07c 204
+.github/actions/build-and-upload-vdb7/action.yml
+  s_fb30ca5f4b239a::t_77a4da81019dd7 235-280
+  s_fb30ca5f4b239a::t_aef9236ab58c8b 185-186
+  s_fb30ca5f4b239a::t_e23e60f1d59b81 151-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "865485c8afc0f45f7f52a3103c10e63b1bec0b86",
+  "prompts": {},
+  "sessions": {
+    "s_fb30ca5f4b239a": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ffd993f8fffeL4FUKCNT59mWPa",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

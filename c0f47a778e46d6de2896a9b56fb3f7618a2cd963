@@ -1,0 +1,22 @@
+.github/workflows/build-vdb7.yml
+  s_7ea0afbaea7b7a::t_32d92934525efb 3-8
+  s_7ea0afbaea7b7a::t_4a02e17538554f 62-69
+.github/actions/split-and-upload-vdb7/action.yml
+  s_7ea0afbaea7b7a::t_5094d495bebfa2 134-144
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "c0f47a778e46d6de2896a9b56fb3f7618a2cd963",
+  "prompts": {},
+  "sessions": {
+    "s_7ea0afbaea7b7a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b22504da-3375-497c-81a2-b20e1e9cedea",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}

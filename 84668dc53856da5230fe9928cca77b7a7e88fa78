@@ -1,0 +1,35 @@
+.github/workflows/build-app-only.yml
+  s_48897fa9a9ac1c::t_6975b0e6cc4017 19
+.github/workflows/build-vdb62.yml
+  s_48897fa9a9ac1c::t_5d5fbfc0f20707 23,65,111
+.github/workflows/build-vdb65.yml
+  s_48897fa9a9ac1c::t_de3ef0ed6cd079 23,65,111,161
+.github/workflows/build-vdb67-distros.yml
+  s_48897fa9a9ac1c::t_0f6312065b8d52 78
+.github/workflows/build-vdb67.yml
+  s_48897fa9a9ac1c::t_3fb82a30a3dcf7 21,87,161,284
+.github/workflows/build-vdb7.yml
+  s_48897fa9a9ac1c::t_69c93c5ddc7aa1 22,76
+.github/workflows/build.yml
+  s_48897fa9a9ac1c::t_42488937b8054c 19
+.github/workflows/squash-hf.yml
+  s_48897fa9a9ac1c::t_b0aa6eded123eb 14
+.github/workflows/sync-vdb67-hf-from-oras.yml
+  s_48897fa9a9ac1c::t_685bed00d91b7a 86,91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "84668dc53856da5230fe9928cca77b7a7e88fa78",
+  "prompts": {},
+  "sessions": {
+    "s_48897fa9a9ac1c": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_ff0b7bfc8ffefcZ2m5wAz0Lq85",
+        "model": "glm-5.3"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
