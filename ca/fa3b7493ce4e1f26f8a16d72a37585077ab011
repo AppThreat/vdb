@@ -1,0 +1,16 @@
+.github/actions/build-and-upload-vdb7/action.yml
+  h_6a4cc5cdf68def 137-141,147-148
+README.md
+  h_6a4cc5cdf68def 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cafa3b7493ce4e1f26f8a16d72a37585077ab011",
+  "prompts": {},
+  "humans": {
+    "h_6a4cc5cdf68def": {
+      "author": "Team AppThreat <cloud@appthreat.com>"
+    }
+  }
+}
