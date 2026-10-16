@@ -9,6 +9,9 @@ on:
 env:
   REGISTRY: ghcr.io
   VDB_VERSION_TAG: v7.0.x
+  # master carries the Bottlerocket + Oracle Linux ELSA ingestion and the
+  # Seal Security feeds (PR AppThreat/vulnerability-db#289 and follow-ups);
+  # v7.0.2, the newest release, predates them.
   VDB_REF: master
   VDB_SQLITE_JOURNAL_MODE: "off"
   HF_XET_HIGH_PERFORMANCE: 1
