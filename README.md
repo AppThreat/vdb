@@ -6,7 +6,7 @@ Pre-built databases:
 
 - NVD_START_YEAR: 2020 or 2016 (10y db)
 - GITHUB_PAGE_COUNT: 10, 20 (10y db), or 30 (app only db)
-- The v7.0.x builds also carry Bottlerocket (BRSA), Oracle Linux (ELSA) and Seal Security advisories on top of the existing sources
+- The v7.0.x full database (and the shards split from it) also carries Bottlerocket (BRSA) and Oracle Linux (ELSA) advisories. Every v7.0.x database carries Seal Security advisories for Seal-rebuilt packages; the app-only variants carry only the application ecosystems (PyPI, npm, Maven, Go, RubyGems) of that feed
 
 ## Manual download
 

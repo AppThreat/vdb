@@ -134,11 +134,10 @@ runs:
           # 3,313 + 480 + 196 + 2,217 MB uncompressed, 279k of the tree's
           # 873k files. cvrf holds nothing but suse/ and opensuse/, so the
           # whole directory goes. Keep them for the v5/v6 actions, which
-          # still read them. seal/ joins them with the same reasoning: its
-          # ~9k OSV-format records are ingested from the two
-          # vulnfeed.sealsecurity.io zips (config.OSV_URL_DICT seal-*), and
-          # the aqua converter skips the tree at ingest — only the zip
-          # would ever read it.
+          # still read them. seal/ is a stale tree: Seal Security is
+          # ingested from the two vulnfeed.sealsecurity.io zips
+          # (config.OSV_URL_DICT seal-*), vuln-list-update no longer writes
+          # it, and the aqua converter ignores it.
           rm -rf "./${{ inputs.vuln-list-path }}/kevc" \
                  "./${{ inputs.vuln-list-path }}/mariner" \
                  "./${{ inputs.vuln-list-path }}/cvrf" \
