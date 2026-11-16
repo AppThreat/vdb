@@ -60,6 +60,8 @@ how you consume them.
 | `ghcr.io/appthreat/vdb7-full`             | app + OS, everything incl. CPE         | `full_builder`             |
 | `ghcr.io/appthreat/vdb7-app-only`         | app ecosystems, 2020+                  | `app_only_builder`         |
 | `ghcr.io/appthreat/vdb7-app-extended`     | app ecosystems, 2020+, metadata tables | `app_extended_builder`     |
+| `ghcr.io/appthreat/vdb7-app-2y`           | app ecosystems, 2024+                  | `app_2y_builder`           |
+| `ghcr.io/appthreat/vdb7-app-2y-extended`  | app ecosystems, 2024+, metadata tables | `app_2y_extended_builder`  |
 | `ghcr.io/appthreat/vdb7-app-10y`          | app ecosystems, 2016+                  | `app_10y_builder`          |
 | `ghcr.io/appthreat/vdb7-app-10y-extended` | app ecosystems, 2016+, metadata tables | `app_10y_extended_builder` |
 
@@ -86,8 +88,8 @@ Hugging Face dataset by `sync-vdb7-hf-from-oras.yml` under `v7-<name>/`;
 `full`, `deb`, `rpm`, `apk` and the two `app-10y` variants are mirrored
 compressed only, the rest also as raw `.vdb7`.
 
-The 6.7.x line additionally publishes `-2y` and OS-inclusive `-extended` /
-`-10y` images. Those have no v7 equivalent yet.
+The 6.7.x line additionally publishes OS-inclusive `-extended` / `-10y`
+images. Those have no v7 equivalent yet.
 
 ### Workflow scripts
 
