@@ -352,3 +352,75 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_USERNAME: ${{ github.actor }}
           PYTHONPATH: vulnerability-db
+  # The app+OS variants of vdb7-full: the same ingest as full_builder (every
+  # OS feed, CPE data, the SUSE and openSUSE OSV feeds) with a different NVD
+  # window or the metadata tables. They complete the flavor grid, so a
+  # consumer that needs OS packages is not forced onto the 2020+ database
+  # without metadata. The 6.7.x line published vdbxz-extended, vdbxz-10y
+  # and vdbxz-10y-extended for the same reason; full-2y and
+  # full-2y-extended are new.
+  #
+  # Each database gets its own runner through the matrix, for the reason
+  # app_10y_builder gives: two app+OS ingests in one job would run back to
+  # back against the 6-hour job limit. Like the app variants they publish as
+  # completeness=full and install with
+  #   vdb db refresh full --image ghcr.io/appthreat/vdb7-full-10y:v7.0.x-xz
+  # The shard split stays with full_builder: these images are complete
+  # databases, not sources for the shard store.
+  full_variant_builder:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: full-extended
+            nvd-start-year: "2020"
+            github-page-count: "10"
+            include-metadata: "true"
+          - name: full-2y
+            nvd-start-year: "2024"
+            github-page-count: "10"
+            include-metadata: "false"
+          - name: full-2y-extended
+            nvd-start-year: "2024"
+            github-page-count: "10"
+            include-metadata: "true"
+          - name: full-10y
+            nvd-start-year: "2016"
+            github-page-count: "30"
+            include-metadata: "false"
+          - name: full-10y-extended
+            nvd-start-year: "2016"
+            github-page-count: "30"
+            include-metadata: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/checkout-vdb-dependencies
+        with:
+          vulnerability-db-ref: ${{ env.VDB_REF }}
+          vuln-list-path: vuln-list
+      - uses: ./.github/actions/setup-vdb-build-tools
+        with:
+          install-hf-cli: "false"
+      - name: Build and upload ${{ matrix.name }} db
+        uses: ./.github/actions/build-and-upload-vdb7
+        with:
+          vuln-list-path: vuln-list
+          shard-name: ${{ matrix.name }}
+          artifact-kind: "full"
+          version-tag: ${{ env.VDB_VERSION_TAG }}
+          hf-path-prefix: v7-${{ matrix.name }}
+          upload-to-hf: "false"
+          nvd-start-year: ${{ matrix.nvd-start-year }}
+          github-page-count: ${{ matrix.github-page-count }}
+          include-metadata: ${{ matrix.include-metadata }}
+          build-id: ${{ github.run_id }}-${{ github.run_attempt }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_USERNAME: ${{ github.actor }}
+          PYTHONPATH: vulnerability-db
