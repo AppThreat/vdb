@@ -58,6 +58,11 @@ how you consume them.
 | Image                                     | Scope                                  | Job                        |
 | :---------------------------------------- | :------------------------------------- | :------------------------- |
 | `ghcr.io/appthreat/vdb7-full`             | app + OS, everything incl. CPE         | `full_builder`             |
+| `ghcr.io/appthreat/vdb7-full-extended`    | app + OS, 2020+, metadata tables       | `full_variant_builder`     |
+| `ghcr.io/appthreat/vdb7-full-2y`          | app + OS, 2024+                        | `full_variant_builder`     |
+| `ghcr.io/appthreat/vdb7-full-2y-extended` | app + OS, 2024+, metadata tables       | `full_variant_builder`     |
+| `ghcr.io/appthreat/vdb7-full-10y`         | app + OS, 2016+                        | `full_variant_builder`     |
+| `ghcr.io/appthreat/vdb7-full-10y-extended`| app + OS, 2016+, metadata tables       | `full_variant_builder`     |
 | `ghcr.io/appthreat/vdb7-app-only`         | app ecosystems, 2020+                  | `app_only_builder`         |
 | `ghcr.io/appthreat/vdb7-app-extended`     | app ecosystems, 2020+, metadata tables | `app_extended_builder`     |
 | `ghcr.io/appthreat/vdb7-app-2y`           | app ecosystems, 2024+                  | `app_2y_builder`           |

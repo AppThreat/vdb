@@ -50,7 +50,8 @@ jobs:
             artifacts="$(jq -c '["full"] + ((.siblings.available // []) - ["full"] | sort)' "$work/vdb.meta")"
             rm -rf "$work"
             # Scope variants (app-only, app-extended, app-2y,
-            # app-2y-extended, app-10y, app-10y-extended) are complete databases built by their own
+            # app-2y-extended, app-10y, app-10y-extended and the full-*
+            # app+OS variants) are complete databases built by their own
             # jobs, not shards of the full build, so siblings.available
             # never names them. Add the ones that actually exist in the
             # registry, so the sync stays green before a variant's first
@@ -60,7 +61,8 @@ jobs:
             # Appended, never re-sorted: sorting the combined list would put
             # app-* ahead of "full" and break the ordering the branch above
             # deliberately establishes.
-            for variant in app-only app-extended app-2y app-2y-extended app-10y app-10y-extended; do
+            for variant in app-only app-extended app-2y app-2y-extended app-10y app-10y-extended \
+                full-extended full-2y full-2y-extended full-10y full-10y-extended; do
               if oras manifest fetch "ghcr.io/appthreat/vdb7-${variant}:${VDB_VERSION_TAG}-zst" >/dev/null 2>&1; then
                 artifacts="$(jq -c --arg v "$variant" '. + [$v]' <<<"$artifacts")"
               else
