@@ -1,0 +1,24 @@
+README.md
+  s_7318da1b9edd46::t_c4391fcb876e1f 61-65
+.github/workflows/build-vdb7.yml
+  s_7318da1b9edd46::t_98aecf3a5dfdc2 367
+  s_7318da1b9edd46::t_c4391fcb876e1f 355-366,368-426
+.github/workflows/sync-vdb7-hf-from-oras.yml
+  s_7318da1b9edd46::t_c4391fcb876e1f 53-54,64-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8a472340c6bfc8d961a4684f6f28efb2555cc60d",
+  "prompts": {},
+  "sessions": {
+    "s_7318da1b9edd46": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ec4cd02e-10f8-411b-a4d1-40ff6af5049b",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Prabhu Subramanian <prabhu@appthreat.com>"
+    }
+  }
+}
